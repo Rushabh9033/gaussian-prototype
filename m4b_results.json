@@ -13,7 +13,7 @@
     "C": {
       "name": "Direct-from-Root Structure-Conditioned",
       "status": "BLOCKED",
-      "reason": "Checkpoint/Environment Failure. Downloading .bin checkpoints hangs indefinitely, and Python 3.13 suffers Access Violation (0xc0000005) when parsing legacy pickle weights."
+      "reason": "Safetensors Checkpoint Failure. Essential models (BLIP and ControlNet Tile) lack .safetensors files on the Hub, making secure loading impossible."
     }
   },
   "overall_status": "BLOCKED"

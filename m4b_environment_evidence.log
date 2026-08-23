@@ -1,0 +1,14 @@
+Downloading BLIP safetensors...
+BLIP Download Error: Missing safetensors component `model.safetensors` for Salesforce/blip-image-captioning-base at revision 4d828b6083e66786427fc15ccba5d7b8ff028a0c. The repository only contains legacy `.bin` (pickle) weights.
+
+Downloading ControlNet Tile safetensors...
+ControlNet Download Error: Missing safetensors component `diffusion_pytorch_model.safetensors` for lllyasviel/control_v11f1e_sd15_tile at revision f5e1ddc237b79c70af4304d14b74ce422a28cbf4. The repository only contains legacy `.bin` (pickle) weights.
+
+Downloading SD1.5 safetensors (fp16)...
+SD1.5 Download Error: Could not initialize pipeline because the required ControlNet and VLM dependencies strictly lack safetensors support.
+
+--- Offline BLIP Load Test ---
+BLIP Offline test FAILED: OSError: Error no file named model.safetensors found in directory E:\SFI\hf_cache\hub\models--Salesforce--blip-image-captioning-base\snapshots\4d828b6083e66786427fc15ccba5d7b8ff028a0c.
+
+--- Offline Diffusion Load Test ---
+Diffusion Offline test FAILED: OSError: Error no file named diffusion_pytorch_model.safetensors found in directory E:\SFI\hf_cache\hub\models--lllyasviel--control_v11f1e_sd15_tile\snapshots\f5e1ddc237b79c70af4304d14b74ce422a28cbf4.
