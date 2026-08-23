@@ -3,17 +3,17 @@
     "A": {
       "name": "Chain-of-Zoom",
       "status": "BLOCKED",
-      "reason": "Hardware limitations (8.59 GB VRAM available, requires 24GB for efficient mode)"
+      "reason": "Hardware limitations (requires 24GB VRAM for efficient mode)"
     },
     "B": {
       "name": "Generative Powers of Ten",
       "status": "BLOCKED_NO_REPRODUCIBLE_IMPLEMENTATION",
-      "reason": "No official implementation; unofficial requires DeepFloyd IF which exceeds VRAM and requires gated license"
+      "reason": "No official code; unofficial requires DeepFloyd IF (massive VRAM + gated license)"
     },
     "C": {
       "name": "Direct-from-Root Structure-Conditioned",
       "status": "BLOCKED",
-      "reason": "VLM + ControlNet pipeline exceeds 8.59 GB VRAM; missing local checkpoints"
+      "reason": "Checkpoint/Environment Failure. Downloading .bin checkpoints hangs indefinitely, and Python 3.13 suffers Access Violation (0xc0000005) when parsing legacy pickle weights."
     }
   },
   "overall_status": "BLOCKED"

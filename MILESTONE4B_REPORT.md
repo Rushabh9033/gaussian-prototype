@@ -1,24 +1,34 @@
-# Milestone 4B: Bounded Alternative Deep-Zoom Architecture Bake-Off
+# MILESTONE 4B: BOUNDED ALTERNATIVE ARCHITECTURE BAKE-OFF
 
-## Status: BLOCKED
+**GOAL:** Find whether a fundamentally different architecture can generate five coherent, sharp, synthetic deep-zoom levels from one normal photograph on an 8.59GB VRAM GPU.
 
-### Goal
-To find whether a fundamentally different architecture can generate five coherent, sharp, synthetic deep-zoom levels from one normal photograph (the Porsche image, `128x128` region centered at `245, 150`, zooming up to 256x).
+## HARDWARE ENVIRONMENT
+* GPU: NVIDIA GeForce RTX 4060 Laptop GPU
+* VRAM: 8.59 GB
+* Framework: PyTorch 2.6.0+cu124 (Python 3.13)
 
-### Hardware Limitations
-The host system is equipped with an **NVIDIA GeForce RTX 4060 Laptop GPU** with **8.59 GB of VRAM**.
+## EXPERIMENT STATUS: ALL CANDIDATES BLOCKED
 
-### Candidate A — Official Chain-of-Zoom
-- **Status:** **BLOCKED**
-- **Reason:** Hardware limitations. The official `Chain-of-Zoom` implementation requires 24GB VRAM even in its `--efficient_memory` mode to run SD3 Medium + Qwen2.5-VL-3B-Instruct + RAM simultaneously. The available 8.59 GB VRAM is insufficient.
+### CANDIDATE A: Chain-of-Zoom (arXiv:2412.10300)
+**Status:** `BLOCKED`
+**Reason:** Severe Hardware VRAM limitations. The official implementation dictates approximately 24GB VRAM is required to load `stabilityai/stable-diffusion-3-medium-diffusers` + `Qwen/Qwen2.5-VL-7B-Instruct` + `xinyu1205/recognize-anything-plus-model` concurrently, even when utilizing their efficient-memory mode. Our hardware only possesses 8.59GB.
 
-### Candidate B — Joint Multi-Scale Generation (Generative Powers of Ten)
-- **Status:** **BLOCKED_NO_REPRODUCIBLE_IMPLEMENTATION**
-- **Reason:** The official authors (Google/UW) did not release source code for "Generative Powers of Ten" (arXiv:2312.02149). The only available implementation (`atfortes/generative-powers-of-ten`) is unofficial and uses DeepFloyd IF, which requires a gated HuggingFace research license (which we cannot accept automatically) and vastly exceeds our 8.59 GB VRAM limit.
+### CANDIDATE B: Generative Powers of Ten (arXiv:2312.02149)
+**Status:** `BLOCKED_NO_REPRODUCIBLE_IMPLEMENTATION`
+**Reason:** The authors did not release official code. The primary unofficial replication requires DeepFloyd IF, which mandates a gated HuggingFace license and is known to consume massive amounts of VRAM that exceed our 8.59GB budget.
 
-### Candidate C — Direct-from-Root Structure-Conditioned Generation
-- **Status:** **BLOCKED**
-- **Reason:** Hardware limitations. A custom pipeline requiring a local Vision-Language Model (VLM) for material descriptions, a depth/edge estimator, and a structural-conditioned image-to-image model (e.g., ControlNet) cannot fit into the 8.59 GB VRAM without severe, untested aggressive offloading. Furthermore, the necessary multi-gigabyte checkpoints for these components are not locally available, and attempting to download them would violate bounded execution constraints.
-
-### Conclusion
-No candidate could be safely executed under the current hardware constraints and licensing restrictions. No mock images or fake checkpoints were generated. Milestone 4B is blocked pending hardware upgrades or checkpoint availability.
+### CANDIDATE C: Direct-from-Root Structure-Conditioned (SD1.5 ControlNet)
+**Status:** `BLOCKED`
+**Reason:** Checkpoint / Environment Failure.
+**Command Executed:** `python run_m4b_bakeoff.py`
+**Error Evidence:**
+1. Checkpoint network streams (`Salesforce/blip-image-captioning-base` and `lllyasviel/control_v11f1e_sd15_tile`) hang indefinitely during transfer, failing to write the large `.bin` files to disk.
+2. When forced or falling back, the Python 3.13 runtime suffers a hard C++ segmentation fault (Access Violation) when parsing legacy pickle weights (`.bin`).
+Event Viewer Trace:
+```text
+Faulting application name: python.exe, version: 3.13.7150.1013
+Exception code: 0xc0000005
+Fault offset: 0x0000000000000001
+Faulting process id: 0x632c
+```
+Due to the unavailability of `safetensors` for these specific legacy models on the Hub and the resulting environment hard-crash, the pipeline is blocked from initializing.
