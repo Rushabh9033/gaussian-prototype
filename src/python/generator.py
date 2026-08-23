@@ -52,7 +52,7 @@ class BranchGenerator:
             print(f"Error loading model: {e}")
             raise
 
-    def generate_level(self, parent_img_pil, prompt, negative_prompt, seed, num_inference_steps=20):
+    def generate_level(self, parent_img_pil, prompt, negative_prompt, seed, num_inference_steps=20, noise_level=20):
         if self.test_mode:
             # 160x160 -> 640x640 mock
             img_np = np.array(parent_img_pil.resize((parent_img_pil.width * 4, parent_img_pil.height * 4), Image.Resampling.NEAREST))
@@ -68,6 +68,7 @@ class BranchGenerator:
             negative_prompt=negative_prompt,
             image=parent_img_pil,
             num_inference_steps=num_inference_steps,
+            noise_level=noise_level,
             generator=generator
         ).images[0]
         return output
@@ -88,13 +89,51 @@ def extract_crop(img_pil, cx, cy, size):
             
     return Image.fromarray(out_np)
 
-def generate_branch(source_img_path, cx, cy, region_size, levels, seed_val, prompt, negative_prompt="", model_id="stabilityai/stable-diffusion-x4-upscaler", model_revision="main", model_path="", device=None, inference_steps=20, test_mode=False):
+def compute_sharpness_metrics(img_pil):
+    """Compute gradient energy, mean absolute gradient, and entropy for an image."""
+    img_np = np.array(img_pil).astype(np.float64)
+    # Convert to grayscale for gradient computation
+    gray = 0.299 * img_np[:,:,0] + 0.587 * img_np[:,:,1] + 0.114 * img_np[:,:,2]
+    
+    # Gradients
+    gy, gx = np.gradient(gray)
+    mag = np.sqrt(gx**2 + gy**2)
+    
+    gradient_energy = float(np.mean(gx**2 + gy**2))
+    mean_abs_gradient = float(np.mean(mag))
+    normalized_gradient_energy = float(gradient_energy / (np.mean(gray)**2 + 1e-10))
+    
+    # Entropy
+    hist, _ = np.histogram(gray, bins=256, range=(0, 256), density=True)
+    hist = hist[hist > 0]
+    entropy = float(-np.sum(hist * np.log2(hist)))
+    
+    return {
+        "gradient_energy": gradient_energy,
+        "mean_abs_gradient": mean_abs_gradient,
+        "normalized_gradient_energy": normalized_gradient_energy,
+        "image_entropy": entropy
+    }
+
+def generate_branch(source_img_path, cx, cy, region_size, levels, seed_val, prompt, negative_prompt="", model_id="stabilityai/stable-diffusion-x4-upscaler", model_revision="main", model_path="", device=None, inference_steps=20, test_mode=False, prompt_plan=None):
     if region_size != 128:
         print(f"Warning: Region size should be 128 as per spec. Got {region_size}.")
         
     core_size = region_size
     halo = 16
     input_size = core_size + halo * 2 # 160
+    
+    # Validate prompt_plan if provided
+    if prompt_plan is not None:
+        if len(prompt_plan) != levels:
+            raise ValueError(f"prompt_plan must have exactly {levels} entries, got {len(prompt_plan)}")
+        for i, entry in enumerate(prompt_plan):
+            if entry.get("level") != i + 1:
+                raise ValueError(f"prompt_plan entry {i} has wrong level: {entry.get('level')}")
+            if "prompt" not in entry:
+                raise ValueError(f"prompt_plan entry {i} missing 'prompt'")
+            if "noise_level" not in entry:
+                raise ValueError(f"prompt_plan entry {i} missing 'noise_level'")
     
     generator = BranchGenerator(model_id=model_id, model_revision=model_revision, model_path=model_path, device=device, test_mode=test_mode)
     generator.load_model()
@@ -118,6 +157,10 @@ def generate_branch(source_img_path, cx, cy, region_size, levels, seed_val, prom
     
     branch_id = "branch-001"
     
+    # Root bbox in source coordinates — fixed for all levels
+    root_x = cx - core_size // 2
+    root_y = cy - core_size // 2
+    
     cumulative_zoom = 1
     
     for lvl in range(1, levels + 1):
@@ -130,7 +173,15 @@ def generate_branch(source_img_path, cx, cy, region_size, levels, seed_val, prom
         
         crop_img = extract_crop(parent_img, parent_cx, parent_cy, input_size)
         
-        upscaled = generator.generate_level(crop_img, prompt, negative_prompt, lvl_seed, inference_steps)
+        # Determine prompt and noise_level for this level
+        if prompt_plan is not None:
+            lvl_prompt = prompt_plan[lvl - 1]["prompt"]
+            lvl_noise = prompt_plan[lvl - 1]["noise_level"]
+        else:
+            lvl_prompt = prompt
+            lvl_noise = 20  # default
+        
+        upscaled = generator.generate_level(crop_img, lvl_prompt, negative_prompt, lvl_seed, inference_steps, noise_level=lvl_noise)
         
         trim_px = halo * 4 # 64
         final_img = upscaled.crop((trim_px, trim_px, upscaled.width - trim_px, upscaled.height - trim_px))
@@ -148,7 +199,6 @@ def generate_branch(source_img_path, cx, cy, region_size, levels, seed_val, prom
         import skimage.metrics
         
         # Calculate parent consistency
-        # parent core is the central 128x128 of the 160x160 crop_img
         parent_core = crop_img.crop((halo, halo, halo + core_size, halo + core_size))
         child_downscaled = final_img.resize((core_size, core_size), Image.Resampling.LANCZOS)
         
@@ -158,7 +208,17 @@ def generate_branch(source_img_path, cx, cy, region_size, levels, seed_val, prom
         psnr_val = skimage.metrics.peak_signal_noise_ratio(pc_np, cd_np)
         ssim_val = skimage.metrics.structural_similarity(pc_np, cd_np, data_range=255, channel_axis=2, win_size=7)
         
+        # Sharpness metrics
+        sharpness = compute_sharpness_metrics(final_img)
+        
         cumulative_zoom *= 4
+        
+        # Correct source-coordinate bounding box for this level:
+        # Each level covers a 4x smaller area centered on the anchor
+        # L1: core_size x core_size, L2: core_size/4 x core_size/4, etc.
+        lvl_box_size = core_size / (4 ** (lvl - 1))
+        lvl_box_x = cx - lvl_box_size / 2
+        lvl_box_y = cy - lvl_box_size / 2
         
         lvl_info = {
             "level": lvl,
@@ -166,7 +226,7 @@ def generate_branch(source_img_path, cx, cy, region_size, levels, seed_val, prom
             "parent_hash": parent_hash,
             "derived_seed": lvl_seed,
             "parent_crop": [parent_cx - input_size//2, parent_cy - input_size//2, input_size, input_size],
-            "root_bbox": [cx - (core_size//2)/cumulative_zoom, cy - (core_size//2)/cumulative_zoom, core_size/cumulative_zoom, core_size/cumulative_zoom],
+            "root_bbox": [lvl_box_x, lvl_box_y, lvl_box_size, lvl_box_size],
             "cumulative_zoom": cumulative_zoom,
             "width": final_img.width,
             "height": final_img.height,
@@ -174,8 +234,9 @@ def generate_branch(source_img_path, cx, cy, region_size, levels, seed_val, prom
             "sha256": img_hash,
             "model_id": generator.model_id,
             "model_revision": generator.resolved_revision,
-            "prompt": prompt,
+            "prompt": lvl_prompt,
             "negative_prompt": negative_prompt,
+            "noise_level": lvl_noise,
             "inference_steps": inference_steps,
             "guidance_config": {},
             "provenance": "generated",
@@ -183,7 +244,9 @@ def generate_branch(source_img_path, cx, cy, region_size, levels, seed_val, prom
             "generation_time_seconds": t1 - t0,
             "parent_consistency_psnr": float(psnr_val),
             "parent_consistency_ssim": float(ssim_val),
-            "byte_size": len(img_bytes)
+            "byte_size": len(img_bytes),
+            "device": generator.device,
+            "sharpness": sharpness
         }
         
         branch_data.append({

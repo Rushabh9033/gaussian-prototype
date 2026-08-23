@@ -178,6 +178,8 @@ def read_package(zip_path, layers="all"):
                 expected_zooms = [4, 16, 64, 256, 1024]
                 prev_hash = branch["source_sha256"]
                 
+                REJECTED_REVISIONS = {"", "main", "test-mock", "local"}
+                
                 for i, lvl in enumerate(levels):
                     if lvl["level"] != i + 1:
                         raise ValueError(f"Level {i+1} has incorrect level number: {lvl['level']}")
@@ -188,8 +190,9 @@ def read_package(zip_path, layers="all"):
                     if lvl["parent_hash"] != prev_hash:
                         raise ValueError(f"Level {lvl['level']} parent_hash mismatch")
                     
-                    if not is_test and lvl.get("model_revision") in ["", "main", "test-mock"]:
-                        raise ValueError(f"Invalid model_revision '{lvl.get('model_revision')}' in production")
+                    rev = lvl.get("model_revision", "")
+                    if not is_test and rev in REJECTED_REVISIONS:
+                        raise ValueError(f"Invalid model_revision '{rev}' in production")
                     
                     if lvl["provenance"] not in ["synthetic", "generated"]:
                         raise ValueError(f"Level {lvl['level']} has invalid provenance")
@@ -242,6 +245,7 @@ def add_generated_branch(input_pkg, output_pkg, branch_manifest, branch_data, so
         
         # update manifest
         manifest["format_version"] = "3.0"
+        manifest["ai_generated_detail"] = True
         if "generated_branches" not in manifest:
             manifest["generated_branches"] = []
         manifest["generated_branches"].append(branch_manifest)
@@ -309,16 +313,18 @@ def add_generated_branch(input_pkg, output_pkg, branch_manifest, branch_data, so
             "total_generated_bytes": sum(len(b["bytes"]) for b in branch_data),
             "model_id": branch_data[0]["info"]["model_id"],
             "model_revision": branch_data[0]["info"]["model_revision"],
-            "device_used": "cuda", # We could retrieve actual device used if available in info
+            "device_used": branch_data[0]["info"].get("device", "unknown"),
             "total_bytes": sum(len(b["bytes"]) for b in branch_data)
         }
         
         # Replace generated_branch object (or update list)
         metrics["generated_branch"] = gen_metrics
         
-        # write to output
+        # write to output — metrics.json does NOT contain final_zip_size
+        # (self-referential: the ZIP size changes when you write metrics into it)
         with zipfile.ZipFile(output_pkg, 'w', compression=zipfile.ZIP_DEFLATED) as zout:
             zout.writestr("manifest.json", json.dumps(manifest, indent=2))
+            zout.writestr("metrics.json", json.dumps(metrics, indent=2))
             
             for item in zin.infolist():
                 if item.filename not in ["manifest.json", "metrics.json"]:
@@ -327,14 +333,4 @@ def add_generated_branch(input_pkg, output_pkg, branch_manifest, branch_data, so
             for lvl_data in branch_data:
                 lvl = lvl_data["info"]["level"]
                 zout.writestr(f"generated_branches/{branch_manifest['branch_id']}/level-{lvl:02d}.webp", lvl_data["bytes"])
-                
-        # Now get final zip size and rewrite metrics.json?
-        # Actually it's easier to just guess or omit final_zip_size if we can't easily append.
-        # But requirement says "Final ZIP size."
-        # We can write metrics to a separate file or just do two passes.
-        import os
-        final_zip_size = os.path.getsize(output_pkg)
-        metrics["generated_branch"]["final_zip_size"] = final_zip_size
-        
-        with zipfile.ZipFile(output_pkg, 'a', compression=zipfile.ZIP_DEFLATED) as zout:
-            zout.writestr("metrics.json", json.dumps(metrics, indent=2))
+

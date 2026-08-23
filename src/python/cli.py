@@ -177,12 +177,19 @@ def benchmark_cmd(args):
 def generate_branch_cmd(args):
     import sys
     import os
+    import json
     from src.python.generator import generate_branch
     from src.python.package import add_generated_branch
     
     print(f"Generating branch from {args.source_image}...")
     
     is_test = "PYTEST_CURRENT_TEST" in os.environ or "pytest" in sys.argv[0]
+    
+    # Load prompt plan if provided
+    prompt_plan = None
+    if hasattr(args, 'prompt_plan') and args.prompt_plan:
+        with open(args.prompt_plan, 'r') as f:
+            prompt_plan = json.load(f)
     
     manifest_addition, data_addition = generate_branch(
         args.source_image, args.center_x, args.center_y,
@@ -193,7 +200,8 @@ def generate_branch_cmd(args):
         model_path=args.model_path,
         device=args.device,
         inference_steps=args.inference_steps,
-        test_mode=is_test
+        test_mode=is_test,
+        prompt_plan=prompt_plan
     )
     
     if manifest_addition["levels"][0]["model_revision"] == "test-mock" and not is_test:
@@ -251,6 +259,7 @@ def main():
     gen_parser.add_argument("--model-path", type=str, default="", help="Local model directory path")
     gen_parser.add_argument("--device", type=str, default="", help="Device to use (cuda/cpu/mps)")
     gen_parser.add_argument("--inference-steps", type=int, default=20, help="Number of inference steps")
+    gen_parser.add_argument("--prompt-plan", type=str, default="", help="Path to JSON file with per-level prompt and noise_level")
     
     args = parser.parse_args()
     
