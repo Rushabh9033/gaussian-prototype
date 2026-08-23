@@ -174,6 +174,20 @@ def benchmark_cmd(args):
         avg_time = (time.time() - start) / iters
         print(f"Scale {scale}x ({W}x{H}): {avg_time:.4f}s / frame ({1/avg_time:.1f} FPS)")
 
+def generate_branch_cmd(args):
+    from src.python.generator import generate_branch
+    from src.python.package import add_generated_branch
+    
+    print(f"Generating branch from {args.source_image}...")
+    manifest_addition, data_addition = generate_branch(
+        args.source_image, args.center_x, args.center_y,
+        args.region_size, args.levels, args.seed, args.prompt,
+        test_mode=args.test_mode
+    )
+    
+    add_generated_branch(args.input_package, args.output, manifest_addition, data_addition, args.source_image)
+    print(f"Exported V3 package to {args.output}")
+
 def main():
     parser = argparse.ArgumentParser(description="2D Gaussian Prototype CLI")
     subparsers = parser.add_subparsers(dest="command", required=True)
@@ -206,6 +220,19 @@ def main():
     bench_parser.add_argument("-i", "--input", required=True, help="Input zip path")
     bench_parser.add_argument("--layer", type=str, default="all", choices=["all", "base"], help="Which layer to benchmark")
     
+    # Generate Branch
+    gen_parser = subparsers.add_parser("generate-branch")
+    gen_parser.add_argument("--input-package", required=True)
+    gen_parser.add_argument("--source-image", required=True)
+    gen_parser.add_argument("--output", required=True)
+    gen_parser.add_argument("--center-x", type=int, required=True)
+    gen_parser.add_argument("--center-y", type=int, required=True)
+    gen_parser.add_argument("--region-size", type=int, required=True)
+    gen_parser.add_argument("--levels", type=int, default=5)
+    gen_parser.add_argument("--seed", type=int, default=42)
+    gen_parser.add_argument("--prompt", type=str, required=True)
+    gen_parser.add_argument("--test-mode", action="store_true")
+    
     args = parser.parse_args()
     
     if hasattr(args, "progressive") and args.progressive:
@@ -219,6 +246,8 @@ def main():
         info_cmd(args)
     elif args.command == "benchmark":
         benchmark_cmd(args)
+    elif args.command == "generate-branch":
+        generate_branch_cmd(args)
 
 if __name__ == "__main__":
     main()

@@ -19,6 +19,10 @@
   <body>
     <div id="canvas-container">
       <canvas id="viewer-canvas"></canvas>
+      <div id="overlay-container" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; overflow: hidden;">
+         <div id="branch-highlight" style="position: absolute; border: 2px dashed #ff0055; box-shadow: 0 0 10px rgba(255,0,85,0.5); display: none; box-sizing: border-box;"></div>
+         <img id="branch-img" style="position: absolute; display: none; transform-origin: top left; pointer-events: none; image-rendering: pixelated;" />
+      </div>
     </div>
     
     <div id="ui-layer">
@@ -33,12 +37,23 @@
           <div id="v2-stats" style="display: none;">
             <div>Base Layer: <span id="val-base-size"></span> KB</div>
             <div>Detail Layer: <span id="val-detail-size"></span> KB</div>
-            <div style="margin-top: 5px;">
+            <div style="margin-top: 5px;" id="quality-radios">
               <label><input type="radio" name="layer-mode" value="base" id="radio-base"> Base Only</label>
               <label><input type="radio" name="layer-mode" value="full" id="radio-full" checked> Full Quality</label>
             </div>
           </div>
           <button id="btn-fit" style="margin-top: 10px;">Fit to Screen</button>
+          
+          <div id="branch-ui" style="display: none; margin-top: 10px; padding-top: 10px; border-top: 1px solid #555;">
+            <div style="margin-bottom: 5px;">
+              <span id="badge-synthetic" style="background: #e91e63; padding: 2px 5px; border-radius: 3px; font-size: 11px; font-weight: bold; display: none;">SYNTHETIC BRANCH</span>
+            </div>
+            <div id="branch-controls">
+               <div id="branch-info" style="margin-bottom: 5px;">Level: <span id="val-branch-level">0</span> / <span id="val-branch-max">5</span></div>
+               <button id="btn-explore">Explore generated branch</button>
+               <button id="btn-back-base" style="display: none; background: #607d8b;">Back to base image</button>
+            </div>
+          </div>
         </div>
         <div id="error-msg"></div>
       </div>

@@ -9,9 +9,9 @@ export class GaussianRenderer {
     
     private numInstances = 0;
     
-    private panX = 0;
-    private panY = 0;
-    private zoom = 1.0;
+    public panX = 0;
+    public panY = 0;
+    public zoom = 1.0;
     private encodedWidth = 1.0;
     private encodedHeight = 1.0;
     

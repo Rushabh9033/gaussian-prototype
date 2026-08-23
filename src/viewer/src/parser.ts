@@ -25,6 +25,8 @@ export interface PackageData {
     packageSize: number;
     baseSize?: number;
     detailSize?: number;
+    branches?: any[];
+    fetchBranchLevel?: (branchId: string, level: number) => Promise<string>;
 }
 
 function dequantize(buffer: ArrayBuffer, manifest: any): Float32Array {
@@ -73,11 +75,30 @@ export async function parsePackage(file: File, onBaseLoaded?: (pkg: PackageData)
     let baseSize = 0;
     let detailSize = 0;
     
-    if (manifest.format_version !== "1.0" && manifest.format_version !== "2.0") {
+    if (manifest.format_version !== "1.0" && manifest.format_version !== "2.0" && manifest.format_version !== "3.0") {
         throw new Error("Unsupported format version: " + manifest.format_version);
     }
     
-    if (manifest.format_version === "2.0") {
+    let branches: any[] | undefined = manifest.generated_branches;
+    // create a helper to fetch level blob for a branch
+    const fetchBranchLevel = async (branchId: string, level: number): Promise<string> => {
+        const path = `generated_branches/${branchId}/level-${level.toString().padStart(2, '0')}.webp`;
+        const f = zip.file(path);
+        if (!f) throw new Error("Branch file not found: " + path);
+        const buf = await f.async("arraybuffer");
+        
+        // Find hash from manifest
+        const branch = branches?.find(b => b.branch_id === branchId);
+        const levelInfo = branch?.levels?.find((l: any) => l.level === level);
+        if (levelInfo) {
+            if (await sha256(buf) !== levelInfo.sha256) throw new Error("Branch level checksum corruption");
+        }
+        
+        const blob = new Blob([buf], {type: "image/webp"});
+        return URL.createObjectURL(blob);
+    };
+    
+    if (manifest.format_version === "2.0" || manifest.format_version === "3.0") {
         if (manifest.record_stride !== 14) throw new Error("Invalid record stride, expected 14");
         
         const baseFile = zip.file("layers/base.bin");
@@ -97,8 +118,10 @@ export async function parsePackage(file: File, onBaseLoaded?: (pkg: PackageData)
                 splatsData,
                 packageSize: file.size,
                 baseSize,
-                detailSize: 0
-            });
+                detailSize: 0,
+                branches,
+                fetchBranchLevel
+            } as any);
         }
         
         const detailFile = zip.file("layers/detail.bin");
@@ -137,6 +160,8 @@ export async function parsePackage(file: File, onBaseLoaded?: (pkg: PackageData)
         previewUrl,
         packageSize: file.size,
         baseSize,
-        detailSize
-    };
+        detailSize,
+        branches,
+        fetchBranchLevel
+    } as any;
 }

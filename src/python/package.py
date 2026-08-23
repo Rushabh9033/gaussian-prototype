@@ -119,7 +119,7 @@ def read_package(zip_path, layers="all"):
         
         version = str(manifest.get("format_version", "1.0"))
         
-        if version not in ["1.0", "2.0"]:
+        if version not in ["1.0", "2.0", "3.0"]:
             raise ValueError(f"Unsupported format version: {version}")
         
         if version == "1.0":
@@ -134,7 +134,7 @@ def read_package(zip_path, layers="all"):
             if manifest.get("record_stride") != 14:
                 raise ValueError("Invalid record stride")
             
-            # V2 Progressive
+            # V2/V3 Progressive
             quant_rules = manifest["quantization_rules"]
             out_data = []
             
@@ -161,3 +161,98 @@ def read_package(zip_path, layers="all"):
             
             data = np.vstack(out_data)
             return manifest, data, metrics
+
+def add_generated_branch(input_pkg, output_pkg, branch_manifest, branch_data, source_img_path=None):
+    # branch_data is list of dicts: {"info": ..., "bytes": ...}
+    with zipfile.ZipFile(input_pkg, 'r') as zin:
+        manifest = json.loads(zin.read("manifest.json"))
+        metrics = json.loads(zin.read("metrics.json"))
+        
+        # update manifest
+        manifest["format_version"] = "3.0"
+        if "generated_branches" not in manifest:
+            manifest["generated_branches"] = []
+        manifest["generated_branches"].append(branch_manifest)
+        
+        # update metrics
+        old_psnr = metrics.get("psnr", None)
+        old_ssim = metrics.get("ssim", None)
+        if "psnr" in metrics: del metrics["psnr"]
+        if "ssim" in metrics: del metrics["ssim"]
+        if "encode_time_seconds" in metrics: del metrics["encode_time_seconds"]
+        
+        metrics["base_pre_quantization"] = {
+            "psnr": old_psnr,
+            "ssim": old_ssim
+        }
+        
+        # Calculate v2_decoded_base and v2_decoded_full if possible
+        if source_img_path:
+            try:
+                from skimage.metrics import peak_signal_noise_ratio as psnr_fn
+                from skimage.metrics import structural_similarity as ssim_fn
+                from src.python.cli import render_image
+                import torch
+                import numpy as np
+                from PIL import Image
+                
+                # Read decoded data
+                _, base_data, _ = read_package(input_pkg, layers="base")
+                _, full_data, _ = read_package(input_pkg, layers="all")
+                
+                W = manifest["encoded_width"]
+                H = manifest["encoded_height"]
+                orig_img_np = np.array(Image.open(source_img_path).convert("RGB"))
+                
+                def eval_data(data):
+                    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+                    data_t = torch.from_numpy(data).to(device)
+                    pos = data_t[:, 0:2]
+                    scale = data_t[:, 2:4]
+                    rot = data_t[:, 4]
+                    color = data_t[:, 5:8]
+                    opacity = data_t[:, 8]
+                    with torch.no_grad():
+                        final_img_t = render_image(W, H, pos, scale, rot, color, opacity)
+                    final_img_np = (final_img_t.cpu().permute(1, 2, 0).numpy() * 255).clip(0, 255).astype(np.uint8)
+                    p = float(psnr_fn(orig_img_np, final_img_np))
+                    win_size = min(7, min(orig_img_np.shape[0], orig_img_np.shape[1]))
+                    if win_size % 2 == 0: win_size -= 1
+                    win_size = max(3, win_size)
+                    s = float(ssim_fn(orig_img_np, final_img_np, channel_axis=-1, data_range=255, win_size=win_size))
+                    return p, s
+
+                bp, bs = eval_data(base_data)
+                fp, fs = eval_data(full_data)
+                
+                metrics["v2_decoded_base"] = {"psnr": bp, "ssim": bs}
+                metrics["v2_decoded_full"] = {"psnr": fp, "ssim": fs}
+            except Exception as e:
+                print(f"Warning: could not evaluate v2 decoded metrics: {e}")
+        
+        if "generated_branch" not in metrics:
+            metrics["generated_branch"] = []
+            
+        gen_metrics = {
+            "branch_count": len(manifest["generated_branches"]),
+            "level_count": branch_manifest["level_count"],
+            "per_level_byte_size": [len(b["bytes"]) for b in branch_data],
+            "total_generated_bytes": sum(len(b["bytes"]) for b in branch_data),
+            "model_id": branch_data[0]["info"]["model_id"],
+            "model_revision": branch_data[0]["info"]["model_revision"],
+            "device_used": "cuda" # or whatever generator used
+        }
+        metrics["generated_branch"].append(gen_metrics)
+        
+        with zipfile.ZipFile(output_pkg, 'w', zipfile.ZIP_DEFLATED) as zout:
+            for item in zin.infolist():
+                if item.filename not in ["manifest.json", "metrics.json"]:
+                    zout.writestr(item, zin.read(item.filename))
+            
+            for b in branch_data:
+                lvl = b["info"]["level"]
+                filename = f"generated_branches/{branch_manifest['branch_id']}/level-{lvl:02d}.webp"
+                zout.writestr(filename, b["bytes"])
+                
+            zout.writestr("manifest.json", json.dumps(manifest, indent=2))
+            zout.writestr("metrics.json", json.dumps(metrics, indent=2))
