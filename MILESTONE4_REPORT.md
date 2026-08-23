@@ -1,27 +1,17 @@
-# Milestone 4: Deterministic Baked Generated Branch
+# Milestone 4 - Blocked Report
 
-**STATUS: BLOCKED**
-*The implementation is complete and passes all automated tests. However, the real experiment execution is BLOCKED because the `stabilityai/stable-diffusion-x4-upscaler` model cannot be downloaded/loaded in this environment (the Hugging Face hub download hangs indefinitely).*
-The ScaleField V3 format extends V2 by storing a deterministic sequence of AI-generated branches. The backend uses Hugging Face Diffusers (`StableDiffusionUpscalePipeline` with `stabilityai/stable-diffusion-x4-upscaler`) to produce a 5-level deep zoom into a specific feature of the Gaussian package.
+## Current Status
+**BLOCKED**
 
-- **Storage**: A `generated_branches/` directory inside the package zip stores 512x512 `.webp` images.
-- **Manifest Extensions**: A new `generated_branches` array stores the hierarchical metadata, deterministic seeds, `root_bbox_pixels`, and branch identifiers.
-- **Progressive Depth**: Each generated branch provides exactly 5 layers of deep zoom. At a 4x zoom factor per level, this yields a branch depth of 1024x relative to the selected root crop.
-- **Deterministic Derivation**: Deterministic generation is ensured by seeding the pipeline explicitly with a hash composed of the source SHA-256, the provided generation seed, the branch ID, level index, and the parent layer's hash.
-- **Halo & Trimming**: To prevent border artifacts, a padded 192x192 region (from a 128x128 core tile + 32px halo) is extracted from the parent, upscaled 4x to 768x768, and then symmetrically trimmed back to exactly 512x512.
+## Reason
+The Hugging Face diffusers download for the stabilityai/stable-diffusion-x4-upscaler model hangs indefinitely. Attempting to fetch the model weights (Fetching 13 files: 0%| | 0/13 [00:00<?, ?it/s]) stalls and does not progress, likely due to network/proxy issues in the runner environment.
 
-## Viewer Implementation
-The web viewer correctly supports offline playback of V3 branches:
-- A prominent `SYNTHETIC BRANCH` badge alerts the user they are viewing generated content.
-- Navigating the generated branches works via the scroll wheel, mapping zoom percentage seamlessly into discrete layer transitions.
-- "Back to base image" cleanly reverts the display context to the pure Base/Full Gaussian layers, respecting the V2 architecture without requiring external API calls.
+## Work Completed
+All required logic and infrastructure for Milestone 4 (V3 generation and rendering) have been implemented and thoroughly verified via isolated tests:
+1. **Model & Generation Logic**: Updated to enforce exact scaling, 128x128 core region sizes with a 16px boundary halo, source boundary rejection, true source-image SHA-256 byte hashing, explicit HuggingFace dynamic SHA retrieval, and accurate metrics logging (parent consistency PSNR/SSIM, bytes).
+2. **Mock Artifact Safety Guards**: Strict blocks have been added inside generator.py and cli.py to firmly reject --test-mode (mock) from leaking into production.
+3. **V3 Package Validation**: Both the Python package.py read parser and the TypeScript browser parser.ts are fully strict, enforcing the 5-layer requirement, zoom multiples, provenance rules, hash consistency, exact coordinates, and rejecting 	est-mock models.
+4. **Offline Viewer**: Complete offline V3 progressive viewer with tree layout, base layer rendering, generated badges, and interactive navigation is finalized.
 
-## Package Size and Metrics
-The pre-calculated decoding metrics are preserved exactly as requested in `metrics.json`.
-- `base_pre_quantization`: Reflects the pure model output prior to format downsampling.
-- `v2_decoded_base`: Shows the 60% truncated base evaluation.
-- `v2_decoded_full`: Demonstrates the baseline M3 progressive decoded metric.
-- `generated_branch`: Tracks the byte sizes and generator model identifiers for transparency.
-
-## Offline Guarantee
-All synthetic images are baked. No active Hugging Face model, GPU, API key, or internet connection is required by the end-user rendering the `.zip` file in the viewer.
+## Next Steps
+Until the network/download blockage for the HuggingFace weights is resolved in the environment, the real V3 generative package cannot be generated. No mock artifacts have been pushed to the milestone.

@@ -175,15 +175,29 @@ def benchmark_cmd(args):
         print(f"Scale {scale}x ({W}x{H}): {avg_time:.4f}s / frame ({1/avg_time:.1f} FPS)")
 
 def generate_branch_cmd(args):
+    import sys
+    import os
     from src.python.generator import generate_branch
     from src.python.package import add_generated_branch
     
     print(f"Generating branch from {args.source_image}...")
+    
+    is_test = "PYTEST_CURRENT_TEST" in os.environ or "pytest" in sys.argv[0]
+    
     manifest_addition, data_addition = generate_branch(
         args.source_image, args.center_x, args.center_y,
         args.region_size, args.levels, args.seed, args.prompt,
-        test_mode=args.test_mode
+        negative_prompt=args.negative_prompt,
+        model_id=args.model_id,
+        model_revision=args.model_revision,
+        model_path=args.model_path,
+        device=args.device,
+        inference_steps=args.inference_steps,
+        test_mode=is_test
     )
+    
+    if manifest_addition["levels"][0]["model_revision"] == "test-mock" and not is_test:
+        raise ValueError("Cannot package test-mock revision outside of automated test environment")
     
     add_generated_branch(args.input_package, args.output, manifest_addition, data_addition, args.source_image)
     print(f"Exported V3 package to {args.output}")
@@ -221,17 +235,22 @@ def main():
     bench_parser.add_argument("--layer", type=str, default="all", choices=["all", "base"], help="Which layer to benchmark")
     
     # Generate Branch
-    gen_parser = subparsers.add_parser("generate-branch")
-    gen_parser.add_argument("--input-package", required=True)
-    gen_parser.add_argument("--source-image", required=True)
-    gen_parser.add_argument("--output", required=True)
-    gen_parser.add_argument("--center-x", type=int, required=True)
-    gen_parser.add_argument("--center-y", type=int, required=True)
-    gen_parser.add_argument("--region-size", type=int, required=True)
-    gen_parser.add_argument("--levels", type=int, default=5)
-    gen_parser.add_argument("--seed", type=int, default=42)
-    gen_parser.add_argument("--prompt", type=str, required=True)
-    gen_parser.add_argument("--test-mode", action="store_true")
+    gen_parser = subparsers.add_parser("generate-branch", help="Generate V3 deep-zoom branch")
+    gen_parser.add_argument("-i", "--input-package", required=True, help="Input V2 package path")
+    gen_parser.add_argument("--source-image", required=True, help="Original source image path")
+    gen_parser.add_argument("-o", "--output", required=True, help="Output V3 package path")
+    gen_parser.add_argument("--center-x", type=int, required=True, help="Center X coordinate")
+    gen_parser.add_argument("--center-y", type=int, required=True, help="Center Y coordinate")
+    gen_parser.add_argument("--region-size", type=int, required=True, help="Width and height of the core region")
+    gen_parser.add_argument("--levels", type=int, default=5, help="Number of zoom levels to generate")
+    gen_parser.add_argument("--seed", type=int, default=42, help="Base generation seed")
+    gen_parser.add_argument("--prompt", type=str, required=True, help="Generation prompt")
+    gen_parser.add_argument("--negative-prompt", type=str, default="", help="Negative prompt")
+    gen_parser.add_argument("--model-id", type=str, default="stabilityai/stable-diffusion-x4-upscaler", help="HF model ID")
+    gen_parser.add_argument("--model-revision", type=str, default="main", help="HF model revision")
+    gen_parser.add_argument("--model-path", type=str, default="", help="Local model directory path")
+    gen_parser.add_argument("--device", type=str, default="", help="Device to use (cuda/cpu/mps)")
+    gen_parser.add_argument("--inference-steps", type=int, default=20, help="Number of inference steps")
     
     args = parser.parse_args()
     

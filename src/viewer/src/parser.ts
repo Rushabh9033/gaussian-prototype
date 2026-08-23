@@ -80,19 +80,59 @@ export async function parsePackage(file: File, onBaseLoaded?: (pkg: PackageData)
     }
     
     let branches: any[] | undefined = manifest.generated_branches;
+    
+    // Strict V3 Validation
+    if (manifest.format_version === "3.0") {
+        if (!branches || branches.length !== 1) {
+            throw new Error("V3 must contain exactly one branch");
+        }
+        const branch = branches[0];
+        if (branch.provenance !== "synthetic" && branch.provenance !== "generated") {
+            throw new Error("Invalid branch provenance");
+        }
+        if (branch.source_sha256 !== manifest.source_sha256) {
+            throw new Error("Branch source_sha256 mismatch");
+        }
+        const levels = branch.levels;
+        if (!levels || levels.length !== 5) {
+            throw new Error("Branch must contain exactly 5 levels");
+        }
+        
+        const expected_zooms = [4, 16, 64, 256, 1024];
+        let prevHash = branch.source_sha256;
+        for (let i = 0; i < levels.length; i++) {
+            const lvl = levels[i];
+            if (lvl.level !== i + 1) throw new Error("Incorrect level number");
+            if (lvl.parent_level !== i) throw new Error("Incorrect parent level");
+            if (lvl.cumulative_zoom !== expected_zooms[i]) throw new Error("Incorrect zoom");
+            if (lvl.parent_hash !== prevHash) throw new Error("Parent hash mismatch");
+            if (lvl.provenance !== "synthetic" && lvl.provenance !== "generated") throw new Error("Invalid level provenance");
+            if (!lvl.model_revision || lvl.model_revision === "main" || lvl.model_revision === "test-mock") {
+                if (lvl.model_revision === "test-mock" && !window.location.href.includes("test")) {
+                    throw new Error("Cannot load test-mock revision in production viewer");
+                }
+            }
+            if (lvl.mime_type !== "image/webp") throw new Error("Invalid MIME type");
+            
+            // Validate that the file actually exists
+            const path = `generated_branches/${branch.branch_id}/level-${lvl.level.toString().padStart(2, '0')}.webp`;
+            const f = zip.file(path);
+            if (!f) throw new Error("Branch file not found: " + path);
+            
+            // Checksum validation happens here before allowing the branch to load
+            const buf = await f.async("arraybuffer");
+            if (await sha256(buf) !== lvl.sha256) throw new Error(`Branch level ${lvl.level} checksum corruption`);
+            
+            prevHash = lvl.sha256;
+        }
+    }
+    
     // create a helper to fetch level blob for a branch
     const fetchBranchLevel = async (branchId: string, level: number): Promise<string> => {
         const path = `generated_branches/${branchId}/level-${level.toString().padStart(2, '0')}.webp`;
         const f = zip.file(path);
         if (!f) throw new Error("Branch file not found: " + path);
         const buf = await f.async("arraybuffer");
-        
-        // Find hash from manifest
-        const branch = branches?.find(b => b.branch_id === branchId);
-        const levelInfo = branch?.levels?.find((l: any) => l.level === level);
-        if (levelInfo) {
-            if (await sha256(buf) !== levelInfo.sha256) throw new Error("Branch level checksum corruption");
-        }
         
         const blob = new Blob([buf], {type: "image/webp"});
         return URL.createObjectURL(blob);

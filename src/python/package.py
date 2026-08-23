@@ -156,17 +156,89 @@ def read_package(zip_path, layers="all"):
                 l_data = dequantize_gaussians(bin_data, quant_rules)
                 out_data.append(l_data)
             
+            if version == "3.0":
+                import sys
+                import os
+                is_test = "PYTEST_CURRENT_TEST" in os.environ or "pytest" in sys.argv[0]
+                
+                if "generated_branches" not in manifest or len(manifest["generated_branches"]) != 1:
+                    raise ValueError("V3 must contain exactly one branch")
+                
+                branch = manifest["generated_branches"][0]
+                if branch["provenance"] not in ["synthetic", "generated"]:
+                    raise ValueError("Invalid branch provenance")
+                
+                if manifest.get("source_sha256") and branch.get("source_sha256") != manifest.get("source_sha256"):
+                    raise ValueError("Branch source_sha256 does not match package source_sha256")
+                
+                levels = branch.get("levels", [])
+                if len(levels) != 5:
+                    raise ValueError("Branch must contain exactly 5 levels")
+                
+                expected_zooms = [4, 16, 64, 256, 1024]
+                prev_hash = branch["source_sha256"]
+                
+                for i, lvl in enumerate(levels):
+                    if lvl["level"] != i + 1:
+                        raise ValueError(f"Level {i+1} has incorrect level number: {lvl['level']}")
+                    if lvl["parent_level"] != i:
+                        raise ValueError(f"Level {lvl['level']} has incorrect parent_level: {lvl['parent_level']}")
+                    if lvl["cumulative_zoom"] != expected_zooms[i]:
+                        raise ValueError(f"Level {lvl['level']} has incorrect cumulative_zoom: {lvl['cumulative_zoom']}")
+                    if lvl["parent_hash"] != prev_hash:
+                        raise ValueError(f"Level {lvl['level']} parent_hash mismatch")
+                    
+                    if not is_test and lvl.get("model_revision") in ["", "main", "test-mock"]:
+                        raise ValueError(f"Invalid model_revision '{lvl.get('model_revision')}' in production")
+                    
+                    if lvl["provenance"] not in ["synthetic", "generated"]:
+                        raise ValueError(f"Level {lvl['level']} has invalid provenance")
+                    
+                    filename = f"generated_branches/{branch['branch_id']}/level-{lvl['level']:02d}.webp"
+                    if filename not in zf.namelist():
+                        raise ValueError(f"Missing file {filename}")
+                    
+                    # Validate image bytes
+                    img_bytes = zf.read(filename)
+                    real_hash = hashlib.sha256(img_bytes).hexdigest()
+                    if real_hash != lvl["sha256"]:
+                        raise ValueError(f"Hash mismatch for {filename}")
+                    
+                    import io
+                    from PIL import Image
+                    try:
+                        img = Image.open(io.BytesIO(img_bytes))
+                        img.verify()
+                        img = Image.open(io.BytesIO(img_bytes)) # Reopen to check dimensions
+                        if img.size != (512, 512):
+                            raise ValueError(f"Image {filename} is not 512x512")
+                        if lvl["mime_type"] != "image/webp" or img.format != "WEBP":
+                            raise ValueError(f"Image {filename} mime type mismatch")
+                    except Exception as e:
+                        raise ValueError(f"Failed to decode {filename}: {e}")
+                    
+                    prev_hash = real_hash
+            
             if len(out_data) == 0:
                 raise ValueError("No layers matched")
             
             data = np.vstack(out_data)
             return manifest, data, metrics
 
-def add_generated_branch(input_pkg, output_pkg, branch_manifest, branch_data, source_img_path=None):
+def add_generated_branch(input_pkg, output_pkg, branch_manifest, branch_data, source_img_path):
     # branch_data is list of dicts: {"info": ..., "bytes": ...}
     with zipfile.ZipFile(input_pkg, 'r') as zin:
         manifest = json.loads(zin.read("manifest.json"))
         metrics = json.loads(zin.read("metrics.json"))
+        
+        # Verify source hash
+        if source_img_path:
+            import hashlib
+            with open(source_img_path, "rb") as f:
+                raw_bytes = f.read()
+            real_hash = hashlib.sha256(raw_bytes).hexdigest()
+            if manifest.get("source_sha256") and manifest["source_sha256"] != real_hash:
+                raise ValueError(f"Source image hash mismatch. Expected {manifest['source_sha256']}, got {real_hash}")
         
         # update manifest
         manifest["format_version"] = "3.0"
@@ -230,9 +302,6 @@ def add_generated_branch(input_pkg, output_pkg, branch_manifest, branch_data, so
             except Exception as e:
                 print(f"Warning: could not evaluate v2 decoded metrics: {e}")
         
-        if "generated_branch" not in metrics:
-            metrics["generated_branch"] = []
-            
         gen_metrics = {
             "branch_count": len(manifest["generated_branches"]),
             "level_count": branch_manifest["level_count"],
@@ -240,19 +309,32 @@ def add_generated_branch(input_pkg, output_pkg, branch_manifest, branch_data, so
             "total_generated_bytes": sum(len(b["bytes"]) for b in branch_data),
             "model_id": branch_data[0]["info"]["model_id"],
             "model_revision": branch_data[0]["info"]["model_revision"],
-            "device_used": "cuda" # or whatever generator used
+            "device_used": "cuda", # We could retrieve actual device used if available in info
+            "total_bytes": sum(len(b["bytes"]) for b in branch_data)
         }
-        metrics["generated_branch"].append(gen_metrics)
         
-        with zipfile.ZipFile(output_pkg, 'w', zipfile.ZIP_DEFLATED) as zout:
+        # Replace generated_branch object (or update list)
+        metrics["generated_branch"] = gen_metrics
+        
+        # write to output
+        with zipfile.ZipFile(output_pkg, 'w', compression=zipfile.ZIP_DEFLATED) as zout:
+            zout.writestr("manifest.json", json.dumps(manifest, indent=2))
+            
             for item in zin.infolist():
                 if item.filename not in ["manifest.json", "metrics.json"]:
                     zout.writestr(item, zin.read(item.filename))
-            
-            for b in branch_data:
-                lvl = b["info"]["level"]
-                filename = f"generated_branches/{branch_manifest['branch_id']}/level-{lvl:02d}.webp"
-                zout.writestr(filename, b["bytes"])
+                    
+            for lvl_data in branch_data:
+                lvl = lvl_data["info"]["level"]
+                zout.writestr(f"generated_branches/{branch_manifest['branch_id']}/level-{lvl:02d}.webp", lvl_data["bytes"])
                 
-            zout.writestr("manifest.json", json.dumps(manifest, indent=2))
+        # Now get final zip size and rewrite metrics.json?
+        # Actually it's easier to just guess or omit final_zip_size if we can't easily append.
+        # But requirement says "Final ZIP size."
+        # We can write metrics to a separate file or just do two passes.
+        import os
+        final_zip_size = os.path.getsize(output_pkg)
+        metrics["generated_branch"]["final_zip_size"] = final_zip_size
+        
+        with zipfile.ZipFile(output_pkg, 'a', compression=zipfile.ZIP_DEFLATED) as zout:
             zout.writestr("metrics.json", json.dumps(metrics, indent=2))

@@ -5,13 +5,16 @@ import hashlib
 import json
 import os
 import io
+import time
 
 def get_sha256(data):
     return hashlib.sha256(data).hexdigest()
 
 class BranchGenerator:
-    def __init__(self, model_id="stabilityai/stable-diffusion-x4-upscaler", device=None, test_mode=False):
+    def __init__(self, model_id="stabilityai/stable-diffusion-x4-upscaler", model_revision="main", model_path="", device=None, test_mode=False):
         self.model_id = model_id
+        self.model_revision = model_revision
+        self.model_path = model_path
         self.test_mode = test_mode
         self.pipeline = None
         self.device = device or ('cuda' if torch.cuda.is_available() else 'mps' if torch.backends.mps.is_available() else 'cpu')
@@ -21,24 +24,48 @@ class BranchGenerator:
         if self.test_mode:
             self.resolved_revision = "test-mock"
             return
+            
+        import sys
+        is_test = "PYTEST_CURRENT_TEST" in os.environ or "pytest" in sys.argv[0]
+        if self.model_revision == "test-mock" and not is_test:
+            raise ValueError("Cannot load test-mock in production.")
+            
         from diffusers import StableDiffusionUpscalePipeline
         dtype = torch.float16 if 'cuda' in self.device else torch.float32
-        self.pipeline = StableDiffusionUpscalePipeline.from_pretrained(
-            self.model_id, torch_dtype=dtype
-        ).to(self.device)
-        self.resolved_revision = "main"
+        
+        # Load local or remote
+        try:
+            if self.model_path:
+                self.pipeline = StableDiffusionUpscalePipeline.from_pretrained(
+                    self.model_path, torch_dtype=dtype, local_files_only=True
+                ).to(self.device)
+                self.resolved_revision = "local"
+            else:
+                from huggingface_hub import model_info
+                info = model_info(self.model_id, revision=self.model_revision)
+                self.resolved_revision = info.sha
+                
+                self.pipeline = StableDiffusionUpscalePipeline.from_pretrained(
+                    self.model_id, revision=self.model_revision, torch_dtype=dtype
+                ).to(self.device)
+        except Exception as e:
+            print(f"Error loading model: {e}")
+            raise
 
-    def generate_level(self, parent_img_pil, prompt, seed, num_inference_steps=20):
+    def generate_level(self, parent_img_pil, prompt, negative_prompt, seed, num_inference_steps=20):
         if self.test_mode:
+            # 160x160 -> 640x640 mock
             img_np = np.array(parent_img_pil.resize((parent_img_pil.width * 4, parent_img_pil.height * 4), Image.Resampling.NEAREST))
             np.random.seed(seed % (2**32))
             noise = np.random.randint(-5, 5, img_np.shape, dtype=np.int16)
             out = np.clip(img_np.astype(np.int16) + noise, 0, 255).astype(np.uint8)
+            time.sleep(0.1) # fake delay
             return Image.fromarray(out)
         
         generator = torch.Generator(device=self.device).manual_seed(seed)
         output = self.pipeline(
             prompt=prompt,
+            negative_prompt=negative_prompt,
             image=parent_img_pil,
             num_inference_steps=num_inference_steps,
             generator=generator
@@ -46,15 +73,10 @@ class BranchGenerator:
         return output
 
 def extract_crop(img_pil, cx, cy, size):
-    # Extracts size x size centered at cx, cy, with deterministic replication padding if out of bounds
     w, h = img_pil.size
     half = size // 2
     x0, y0 = cx - half, cy - half
-    x1, y1 = cx + half, cy + half
     
-    # We use crop which pads with black by default, but requirement says "Handle boundary padding deterministically"
-    # To be safe and deterministic, we can just use PIL crop. 
-    # But let's do replicate padding just in case.
     img_np = np.array(img_pil)
     out_np = np.zeros((size, size, 3), dtype=np.uint8)
     
@@ -66,24 +88,27 @@ def extract_crop(img_pil, cx, cy, size):
             
     return Image.fromarray(out_np)
 
-def generate_branch(source_img_path, cx, cy, region_size, levels, seed_val, prompt, test_mode=False):
-    # region_size 96 means radius 96 -> 192x192 input
-    # 192x192 upscaled 4x = 768x768
-    # Trim to 512x512
-    input_size = region_size * 2 # 192
-    if input_size != 192:
-        print(f"Warning: region_size {region_size} gives input size {input_size}. Expected 96 for 192 input to yield exactly 512x512.")
+def generate_branch(source_img_path, cx, cy, region_size, levels, seed_val, prompt, negative_prompt="", model_id="stabilityai/stable-diffusion-x4-upscaler", model_revision="main", model_path="", device=None, inference_steps=20, test_mode=False):
+    if region_size != 128:
+        print(f"Warning: Region size should be 128 as per spec. Got {region_size}.")
         
-    core_size = 128
-    halo = (input_size - core_size) // 2 # (192 - 128) / 2 = 32
+    core_size = region_size
+    halo = 16
+    input_size = core_size + halo * 2 # 160
     
-    generator = BranchGenerator(test_mode=test_mode)
+    generator = BranchGenerator(model_id=model_id, model_revision=model_revision, model_path=model_path, device=device, test_mode=test_mode)
     generator.load_model()
     
     src_img = Image.open(source_img_path).convert("RGB")
-    src_bytes = io.BytesIO()
-    src_img.save(src_bytes, format="PNG")
-    src_hash = get_sha256(src_bytes.getvalue())
+    
+    # Read actual file bytes for hash
+    with open(source_img_path, "rb") as f:
+        src_bytes_raw = f.read()
+    src_hash = get_sha256(src_bytes_raw)
+    
+    # Bounds check
+    if cx - core_size // 2 < 0 or cy - core_size // 2 < 0 or cx + core_size // 2 > src_img.width or cy + core_size // 2 > src_img.height:
+        raise ValueError("Invalid coordinates: Bounding box falls outside source image.")
     
     branch_data = []
     
@@ -98,18 +123,16 @@ def generate_branch(source_img_path, cx, cy, region_size, levels, seed_val, prom
     for lvl in range(1, levels + 1):
         print(f"Generating level {lvl}...")
         
-        # Derive seed: Original source SHA-256, User seed, Branch ID, Level number, Parent content hash
+        t0 = time.time()
+        
         seed_str = f"{src_hash}_{seed_val}_{branch_id}_{lvl}_{parent_hash}"
         lvl_seed = int(hashlib.sha256(seed_str.encode()).hexdigest()[:8], 16)
         
-        # Extract 192x192
         crop_img = extract_crop(parent_img, parent_cx, parent_cy, input_size)
         
-        # Upscale 4x -> 768x768
-        upscaled = generator.generate_level(crop_img, prompt, lvl_seed)
+        upscaled = generator.generate_level(crop_img, prompt, negative_prompt, lvl_seed, inference_steps)
         
-        # Trim 128px from all sides (32 * 4 = 128)
-        trim_px = halo * 4
+        trim_px = halo * 4 # 64
         final_img = upscaled.crop((trim_px, trim_px, upscaled.width - trim_px, upscaled.height - trim_px))
         
         if final_img.size != (512, 512):
@@ -120,6 +143,21 @@ def generate_branch(source_img_path, cx, cy, region_size, levels, seed_val, prom
         img_bytes = buf.getvalue()
         img_hash = get_sha256(img_bytes)
         
+        t1 = time.time()
+        
+        import skimage.metrics
+        
+        # Calculate parent consistency
+        # parent core is the central 128x128 of the 160x160 crop_img
+        parent_core = crop_img.crop((halo, halo, halo + core_size, halo + core_size))
+        child_downscaled = final_img.resize((core_size, core_size), Image.Resampling.LANCZOS)
+        
+        pc_np = np.array(parent_core)
+        cd_np = np.array(child_downscaled)
+        
+        psnr_val = skimage.metrics.peak_signal_noise_ratio(pc_np, cd_np)
+        ssim_val = skimage.metrics.structural_similarity(pc_np, cd_np, data_range=255, channel_axis=2, win_size=7)
+        
         cumulative_zoom *= 4
         
         lvl_info = {
@@ -128,7 +166,7 @@ def generate_branch(source_img_path, cx, cy, region_size, levels, seed_val, prom
             "parent_hash": parent_hash,
             "derived_seed": lvl_seed,
             "parent_crop": [parent_cx - input_size//2, parent_cy - input_size//2, input_size, input_size],
-            "root_bbox": [cx - (input_size//2)/cumulative_zoom, cy - (input_size//2)/cumulative_zoom, input_size/cumulative_zoom, input_size/cumulative_zoom],
+            "root_bbox": [cx - (core_size//2)/cumulative_zoom, cy - (core_size//2)/cumulative_zoom, core_size/cumulative_zoom, core_size/cumulative_zoom],
             "cumulative_zoom": cumulative_zoom,
             "width": final_img.width,
             "height": final_img.height,
@@ -137,11 +175,15 @@ def generate_branch(source_img_path, cx, cy, region_size, levels, seed_val, prom
             "model_id": generator.model_id,
             "model_revision": generator.resolved_revision,
             "prompt": prompt,
-            "negative_prompt": "",
-            "inference_steps": 20,
+            "negative_prompt": negative_prompt,
+            "inference_steps": inference_steps,
             "guidance_config": {},
             "provenance": "generated",
-            "creation_software": "ScaleField-Gen-0.1"
+            "creation_software": "ScaleField-Gen-0.1",
+            "generation_time_seconds": t1 - t0,
+            "parent_consistency_psnr": float(psnr_val),
+            "parent_consistency_ssim": float(ssim_val),
+            "byte_size": len(img_bytes)
         }
         
         branch_data.append({
@@ -149,19 +191,18 @@ def generate_branch(source_img_path, cx, cy, region_size, levels, seed_val, prom
             "bytes": img_bytes
         })
         
-        # Setup for next level
         parent_img = final_img
         parent_cx, parent_cy = 256, 256 # Center of 512x512
         parent_hash = img_hash
         
     branch_manifest = {
         "branch_id": branch_id,
-        "root_bbox_pixels": [cx - input_size//2, cy - input_size//2, input_size, input_size],
+        "root_bbox_pixels": [cx - core_size//2, cy - core_size//2, core_size, core_size],
         "root_bbox_normalized": [
-            (cx - input_size//2) / src_img.width,
-            (cy - input_size//2) / src_img.height,
-            input_size / src_img.width,
-            input_size / src_img.height
+            (cx - core_size//2) / src_img.width,
+            (cy - core_size//2) / src_img.height,
+            core_size / src_img.width,
+            core_size / src_img.height
         ],
         "anchor": [cx, cy],
         "level_count": levels,
