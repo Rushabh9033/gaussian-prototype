@@ -28,8 +28,16 @@
         <div id="stats" style="display: none;">
           <div>Zoom: <span id="val-zoom">100</span>%</div>
           <div>Size: <span id="val-dim"></span></div>
-          <div>Gaussians: <span id="val-count"></span></div>
+          <div>Gaussians: <span id="val-count"></span> <span id="val-total-count"></span></div>
           <div>Package: <span id="val-size"></span> KB</div>
+          <div id="v2-stats" style="display: none;">
+            <div>Base Layer: <span id="val-base-size"></span> KB</div>
+            <div>Detail Layer: <span id="val-detail-size"></span> KB</div>
+            <div style="margin-top: 5px;">
+              <label><input type="radio" name="layer-mode" value="base" id="radio-base"> Base Only</label>
+              <label><input type="radio" name="layer-mode" value="full" id="radio-full" checked> Full Quality</label>
+            </div>
+          </div>
           <button id="btn-fit" style="margin-top: 10px;">Fit to Screen</button>
         </div>
         <div id="error-msg"></div>

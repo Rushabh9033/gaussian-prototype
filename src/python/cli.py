@@ -102,7 +102,8 @@ def encode_cmd(args):
         rot.detach().cpu().numpy(),
         color.detach().cpu().numpy(),
         opacity.detach().cpu().numpy(),
-        W, H, metrics, preview_img, seed=args.seed
+        W, H, metrics, preview_img, seed=args.seed,
+        format_version=getattr(args, 'format_version', 1.0)
     )
     
     pkg_size = os.path.getsize(args.output)
@@ -111,7 +112,7 @@ def encode_cmd(args):
 
 def render_cmd(args):
     device = get_device()
-    manifest, data, metrics = read_package(args.input)
+    manifest, data, metrics = read_package(args.input, layers=getattr(args, 'layer', 'all'))
     
     W = int(manifest["encoded_width"] * args.scale)
     H = int(manifest["encoded_height"] * args.scale)
@@ -143,7 +144,7 @@ def info_cmd(args):
     
 def benchmark_cmd(args):
     device = get_device()
-    manifest, data, metrics = read_package(args.input)
+    manifest, data, metrics = read_package(args.input, layers=getattr(args, 'layer', 'all'))
     
     data_t = torch.from_numpy(data).to(device)
     rot = data_t[:, 4]
@@ -186,12 +187,15 @@ def main():
     enc_parser.add_argument("--max-dim", type=int, default=256, help="Max image dimension during encode")
     enc_parser.add_argument("--seed", type=int, default=42, help="Deterministic seed")
     enc_parser.add_argument("--strategy", type=str, choices=['random', 'adaptive'], default='random', help="Initialization strategy")
+    enc_parser.add_argument("--format-version", type=float, default=1.0, help="Package format version (1.0 or 2.0)")
+    enc_parser.add_argument("--progressive", action="store_true", help="Use V2 progressive layout")
     
     # Render
     ren_parser = subparsers.add_parser("render")
     ren_parser.add_argument("-i", "--input", required=True, help="Input zip path")
     ren_parser.add_argument("-o", "--output", required=True, help="Output png path")
     ren_parser.add_argument("--scale", type=float, default=1.0, help="Output resolution scale")
+    ren_parser.add_argument("--layer", type=str, default="all", choices=["all", "base"], help="Which layer to render")
     
     # Info
     info_parser = subparsers.add_parser("info")
@@ -200,8 +204,12 @@ def main():
     # Benchmark
     bench_parser = subparsers.add_parser("benchmark")
     bench_parser.add_argument("-i", "--input", required=True, help="Input zip path")
+    bench_parser.add_argument("--layer", type=str, default="all", choices=["all", "base"], help="Which layer to benchmark")
     
     args = parser.parse_args()
+    
+    if hasattr(args, "progressive") and args.progressive:
+        args.format_version = 2.0
     
     if args.command == "encode":
         encode_cmd(args)
