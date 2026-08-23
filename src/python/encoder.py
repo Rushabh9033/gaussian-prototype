@@ -55,8 +55,13 @@ def encode_image(target_img_t, num_gaussians, steps, lr=0.01, tile_size=128, dev
             dx[:, :-1] = torch.abs(gray[:, 1:] - gray[:, :-1])
             edges = dy + dx
             edges = torch.nn.functional.avg_pool2d(edges.unsqueeze(0).unsqueeze(0), 3, stride=1, padding=1).squeeze()
-            density = edges + 0.1 * edges.max() # uniform floor
-            density = density / density.sum()
+            density = edges + 0.1 * edges.max() + 1e-6 # strictly positive uniform floor
+            density_sum = density.sum()
+            if not torch.isfinite(density).all() or density_sum <= 0.0:
+                density = torch.ones_like(density)
+                density = density / density.sum()
+            else:
+                density = density / density_sum
             
             flat_indices = torch.multinomial(density.flatten(), active_count, replacement=True)
             y_coords = (flat_indices // W).float() + torch.rand(active_count, device=device)
@@ -101,8 +106,13 @@ def encode_image(target_img_t, num_gaussians, steps, lr=0.01, tile_size=128, dev
                             full_pred[:, ty:ty+cur_H, tx:tx+cur_W] = tp
                             
                 residual = torch.abs(full_pred - target_img_t).mean(dim=0)
-                density = residual + 0.05 * residual.max()
-                density = density / density.sum()
+                density = residual + 0.05 * residual.max() + 1e-6
+                density_sum = density.sum()
+                if not torch.isfinite(density).all() or density_sum <= 0.0:
+                    density = torch.ones_like(density)
+                    density = density / density.sum()
+                else:
+                    density = density / density_sum
                 
                 N2 = num_gaussians - active_count
                 flat_indices = torch.multinomial(density.flatten(), N2, replacement=True)

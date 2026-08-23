@@ -49,7 +49,6 @@ def test_two_stage_preservation():
 
 def test_multi_tile_adaptive():
     target = torch.rand(3, 256, 256)
-    # 256x256 multi tile
     model, _ = encode_image(target, 50, 2, strategy='adaptive', tile_size=128)
     assert model.pos.shape[0] == 50
     assert not torch.isnan(model.pos).any()
@@ -59,3 +58,22 @@ def test_random_strategy_compatibility():
     model, _ = encode_image(target, 20, 2, strategy='random', seed=42)
     assert model.pos.shape[0] == 20
     assert not torch.isnan(model.pos).any()
+
+def test_flat_black_image():
+    target = torch.zeros(3, 32, 32)
+    model, _ = encode_image(target, 20, 4, strategy='adaptive', seed=42)
+    assert model.pos.shape[0] == 20
+    assert torch.isfinite(model.pos).all()
+
+def test_flat_white_image():
+    target = torch.ones(3, 32, 32)
+    model, _ = encode_image(target, 20, 4, strategy='adaptive', seed=42)
+    assert model.pos.shape[0] == 20
+    assert torch.isfinite(model.pos).all()
+
+def test_flat_grey_image():
+    target = torch.ones(3, 32, 32) * 0.5
+    model, _ = encode_image(target, 20, 4, strategy='adaptive', seed=42)
+    assert model.pos.shape[0] == 20
+    assert torch.isfinite(model.pos).all()
+
