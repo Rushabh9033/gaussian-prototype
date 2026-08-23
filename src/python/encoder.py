@@ -41,41 +41,52 @@ def encode_image(target_img_t, num_gaussians, steps, lr=0.01, tile_size=128, dev
     
     for step in range(steps):
         optimizer.zero_grad()
-        pos, scale, rot, color, opacity = model.get_params()
+        total_loss_val = 0.0
         
-        A, B, C = compute_covariances(scale, rot)
+        # We need the base parameters to slice from
+        pos_p = model.pos
+        log_scale_p = model.log_scale
+        rot_p = model.rot
+        color_raw_p = model.color_raw
+        opacity_raw_p = model.opacity_raw
         
-        total_loss = 0.0
-        
+        # For active gaussian checking, we can use a detached version of scale
+        with torch.no_grad():
+            scale_detached = torch.exp(log_scale_p)
+            
         for ty in range(0, H, tile_size):
             for tx in range(0, W, tile_size):
                 cur_W = min(tile_size, W - tx)
                 cur_H = min(tile_size, H - ty)
                 
-                active = get_active_gaussians(tx, ty, cur_W, cur_H, pos, scale)
+                active = get_active_gaussians(tx, ty, cur_W, cur_H, pos_p.detach(), scale_detached)
                 active_idx = torch.nonzero(active).squeeze(1)
                 
                 if len(active_idx) > 0:
+                    a_pos = pos_p[active_idx]
+                    a_scale = torch.exp(log_scale_p[active_idx])
+                    a_rot = rot_p[active_idx]
+                    a_color = torch.sigmoid(color_raw_p[active_idx])
+                    a_opac = torch.sigmoid(opacity_raw_p[active_idx])
+                    
+                    A, B, C = compute_covariances(a_scale, a_rot)
+                    
                     tile_target = target_img_t[:, ty:ty+cur_H, tx:tx+cur_W]
                     tile_pred = render_tile(
                         tx, ty, cur_W, cur_H,
-                        pos[active_idx],
-                        A[active_idx], B[active_idx], C[active_idx],
-                        color[active_idx], opacity[active_idx],
-                        device
+                        a_pos, A, B, C, a_color, a_opac, device
                     )
                     
                     tile_loss = torch.mean((tile_pred - tile_target) ** 2)
-                    # Weight loss by tile area to be mathematically correct for MSE over full image
                     weight = (cur_W * cur_H) / (W * H)
-                    (tile_loss * weight).backward()
                     
-                    total_loss += tile_loss.item() * weight
+                    (tile_loss * weight).backward()
+                    total_loss_val += tile_loss.item() * weight
                     
         optimizer.step()
         
         if (step + 1) % 50 == 0:
-            print(f"Step {step+1}/{steps}, MSE: {total_loss:.6f}")
+            print(f"Step {step+1}/{steps}, MSE: {total_loss_val:.6f}")
             
     encode_time = time.time() - start_time
     return model, encode_time

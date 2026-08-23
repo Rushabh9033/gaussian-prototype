@@ -62,32 +62,36 @@ def encode_cmd(args):
     
     pos, scale, rot, color, opacity = model.get_params()
     
-    # Render final image for preview and metrics
+    # Render final image for preview and metrics AT ORIGINAL RESOLUTION
     with torch.no_grad():
-        final_img_t = render_image(W, H, pos, scale, rot, color, opacity)
+        render_scale = orig_W / W if W > 0 else 1.0
+        pos_eval = pos * render_scale
+        scale_eval = scale * render_scale
+        final_img_t = render_image(orig_W, orig_H, pos_eval, scale_eval, rot, color, opacity)
         final_img_np = (final_img_t.cpu().permute(1, 2, 0).numpy() * 255).clip(0, 255).astype(np.uint8)
         preview_img = Image.fromarray(final_img_np)
         
     # Metrics
-    source_img_np = (img_t.cpu().permute(1, 2, 0).numpy() * 255).clip(0, 255).astype(np.uint8)
+    orig_img_np = np.array(Image.open(args.input).convert('RGB'))
     
     metrics = {
         "timestamp": datetime.datetime.now(datetime.timezone.utc).isoformat(),
         "source_sha256": hash_file(args.input),
         "original_width": orig_W,
         "original_height": orig_H,
+        "encoded_width": W,
+        "encoded_height": H,
         "encode_time_seconds": encode_time,
         "device_used": str(device)
     }
     
     if psnr and ssim:
-        metrics["psnr"] = float(psnr(source_img_np, final_img_np))
-        # SSIM with win_size dynamically determined for small images
-        win_size = min(7, min(W, H))
+        metrics["psnr"] = float(psnr(orig_img_np, final_img_np))
+        win_size = min(7, min(orig_W, orig_H))
         if win_size % 2 == 0:
             win_size -= 1
         win_size = max(3, win_size)
-        metrics["ssim"] = float(ssim(source_img_np, final_img_np, channel_axis=-1, data_range=255, win_size=win_size))
+        metrics["ssim"] = float(ssim(orig_img_np, final_img_np, channel_axis=-1, data_range=255, win_size=win_size))
         
     # Save package
     create_package(
