@@ -50,14 +50,15 @@ def encode_cmd(args):
     img_t = torch.from_numpy(np.array(img)).float().permute(2, 0, 1) / 255.0
     img_t = img_t.to(device)
     
-    print(f"Encoding {W}x{H} with {args.count} Gaussians for {args.steps} steps...")
+    print(f"Encoding {W}x{H} with {args.count} Gaussians for {args.steps} steps using {args.strategy} strategy...")
     
     model, encode_time = encode_image(
         img_t, 
         num_gaussians=args.count, 
         steps=args.steps, 
         device=device,
-        seed=args.seed
+        seed=args.seed,
+        strategy=args.strategy
     )
     
     pos, scale, rot, color, opacity = model.get_params()
@@ -184,6 +185,7 @@ def main():
     enc_parser.add_argument("--steps", type=int, default=500, help="Optimization steps")
     enc_parser.add_argument("--max-dim", type=int, default=256, help="Max image dimension during encode")
     enc_parser.add_argument("--seed", type=int, default=42, help="Deterministic seed")
+    enc_parser.add_argument("--strategy", type=str, choices=['random', 'adaptive'], default='random', help="Initialization strategy")
     
     # Render
     ren_parser = subparsers.add_parser("render")
