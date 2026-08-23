@@ -1,0 +1,20 @@
+{
+  "candidates": {
+    "A": {
+      "name": "Chain-of-Zoom",
+      "status": "BLOCKED",
+      "reason": "Hardware limitations (8.59 GB VRAM available, requires 24GB for efficient mode)"
+    },
+    "B": {
+      "name": "Generative Powers of Ten",
+      "status": "BLOCKED_NO_REPRODUCIBLE_IMPLEMENTATION",
+      "reason": "No official implementation; unofficial requires DeepFloyd IF which exceeds VRAM and requires gated license"
+    },
+    "C": {
+      "name": "Direct-from-Root Structure-Conditioned",
+      "status": "BLOCKED",
+      "reason": "VLM + ControlNet pipeline exceeds 8.59 GB VRAM; missing local checkpoints"
+    }
+  },
+  "overall_status": "BLOCKED"
+}

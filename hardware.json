@@ -1,0 +1,8 @@
+{
+  "gpu_model": "NVIDIA GeForce RTX 4060 Laptop GPU",
+  "vram_gb": 8.59,
+  "pytorch_version": "2.6.0+cu124",
+  "cuda_available": true,
+  "disk_space_c_gb": 29.0,
+  "disk_space_e_gb": 199.5
+}
