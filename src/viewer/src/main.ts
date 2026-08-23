@@ -28,7 +28,7 @@ try {
     errorMsg.textContent = "Failed to initialize WebGL: " + (e as Error).message;
 }
 
-function renderCurrentLayer() {
+function renderCurrentLayer(preserveView = true) {
     if (!currentPkg) return;
     
     let activeData = currentPkg.splatsData;
@@ -42,7 +42,7 @@ function renderCurrentLayer() {
         count = fullData.length / 9;
     }
     
-    renderer.loadSplats(activeData, currentPkg.manifest.encoded_width, currentPkg.manifest.encoded_height);
+    renderer.loadSplats(activeData, currentPkg.manifest.encoded_width, currentPkg.manifest.encoded_height, preserveView);
     valCount.textContent = count.toLocaleString();
     if (currentPkg.splatsDataDetail) {
         const total = (currentPkg.splatsData.length + currentPkg.splatsDataDetail.length) / 9;
@@ -52,8 +52,8 @@ function renderCurrentLayer() {
     }
 }
 
-radioBase.addEventListener('change', renderCurrentLayer);
-radioFull.addEventListener('change', renderCurrentLayer);
+radioBase.addEventListener('change', () => renderCurrentLayer(true));
+radioFull.addEventListener('change', () => renderCurrentLayer(true));
 
 fileInput.addEventListener('change', async (e) => {
     const file = (e.target as HTMLInputElement).files?.[0];
@@ -61,26 +61,36 @@ fileInput.addEventListener('change', async (e) => {
     
     errorMsg.textContent = "Loading package...";
     statsDiv.style.display = "none";
+    radioFull.disabled = true; // disable until loaded
     
     try {
-        const pkg = await parsePackage(file);
+        const pkg = await parsePackage(file, (basePkg) => {
+            currentPkg = basePkg;
+            radioBase.checked = true;
+            renderCurrentLayer(false); // Initial load fits to screen
+            
+            valDim.textContent = `${basePkg.manifest.original_width}x${basePkg.manifest.original_height}`;
+            valSize.textContent = (basePkg.packageSize / 1024).toFixed(1);
+            
+            v2Stats.style.display = "block";
+            valBaseSize.textContent = (basePkg.baseSize! / 1024).toFixed(1);
+            valDetailSize.textContent = "Loading...";
+            statsDiv.style.display = "block";
+        });
+        
         currentPkg = pkg;
         
-        radioFull.checked = true;
-        renderCurrentLayer();
-        
-        valDim.textContent = `${pkg.manifest.original_width}x${pkg.manifest.original_height}`;
-        valSize.textContent = (pkg.packageSize / 1024).toFixed(1);
-        
         if (pkg.manifest.format_version === "2.0") {
-            v2Stats.style.display = "block";
-            valBaseSize.textContent = (pkg.baseSize! / 1024).toFixed(1);
+            radioFull.disabled = false;
             valDetailSize.textContent = (pkg.detailSize! / 1024).toFixed(1);
         } else {
             v2Stats.style.display = "none";
+            radioBase.checked = true;
+            renderCurrentLayer(false); // Render for V1
+            valDim.textContent = `${pkg.manifest.original_width}x${pkg.manifest.original_height}`;
+            valSize.textContent = (pkg.packageSize / 1024).toFixed(1);
+            statsDiv.style.display = "block";
         }
-        
-        statsDiv.style.display = "block";
         errorMsg.textContent = "";
         
     } catch (err) {

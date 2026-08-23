@@ -117,13 +117,23 @@ def read_package(zip_path, layers="all"):
         manifest = json.loads(zf.read("manifest.json"))
         metrics = json.loads(zf.read("metrics.json"))
         
-        version = float(manifest.get("format_version", "1.0"))
+        version = str(manifest.get("format_version", "1.0"))
         
-        if version == 1.0:
+        if version not in ["1.0", "2.0"]:
+            raise ValueError(f"Unsupported format version: {version}")
+        
+        if version == "1.0":
+            if "splats.bin" not in zf.namelist():
+                raise ValueError("splats.bin not found")
             splats_bin = zf.read("splats.bin")
+            if len(splats_bin) != manifest["gaussian_count"] * 36:
+                raise ValueError("length mismatch")
             data = np.frombuffer(splats_bin, dtype=np.float32).reshape(-1, 9)
             return manifest, data, metrics
         else:
+            if manifest.get("record_stride") != 14:
+                raise ValueError("Invalid record stride")
+            
             # V2 Progressive
             quant_rules = manifest["quantization_rules"]
             out_data = []
@@ -132,9 +142,14 @@ def read_package(zip_path, layers="all"):
                 lname = layer_info["name"]
                 if layers == "base" and lname != "base":
                     continue
+                if layer_info["filename"] not in zf.namelist():
+                    raise ValueError(f"{lname.capitalize()} layer not found")
+                
                 bin_data = zf.read(layer_info["filename"])
                 
-                # Checksum verify (optional but good)
+                if len(bin_data) != layer_info["gaussian_count"] * 14:
+                    raise ValueError("length mismatch")
+                
                 if hashlib.sha256(bin_data).hexdigest() != layer_info["sha256"]:
                     raise ValueError(f"Checksum mismatch for layer {lname}")
                 

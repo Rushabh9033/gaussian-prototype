@@ -3,16 +3,19 @@ import numpy as np
 def quantize_gaussians(pos, scale, rot, color, opacity, W, H, rules=None):
     N = pos.shape[0]
     
+    if not (np.isfinite(pos).all() and np.isfinite(rot).all() and np.isfinite(color).all() and np.isfinite(opacity).all()):
+        raise ValueError("NaN or Infinity in pos, rot, color, or opacity")
+    if not np.isfinite(scale).all():
+        raise ValueError("NaN or Infinity in scale")
+    if not (scale > 0).all():
+        raise ValueError("Scale must be strictly positive")
+    
     # Position
-    pos_np = np.nan_to_num(pos, nan=0.0, posinf=W, neginf=0.0)
-    pos_x = np.clip(pos_np[:, 0] / W, 0.0, 1.0) * 65535
-    pos_y = np.clip(pos_np[:, 1] / H, 0.0, 1.0) * 65535
+    pos_x = np.clip(pos[:, 0] / W, 0.0, 1.0) * 65535
+    pos_y = np.clip(pos[:, 1] / H, 0.0, 1.0) * 65535
     
     # Scale
-    # Filter out zeros/negatives/NaN safely for log
-    scale_np = np.nan_to_num(scale, nan=1e-10, posinf=1.0, neginf=1e-10)
-    scale_safe = np.clip(scale_np, 1e-10, None)
-    log_scale = np.log(scale_safe)
+    log_scale = np.log(scale)
     
     if rules is not None:
         min_sx = rules["scale"]["min_log_x"]
@@ -33,18 +36,15 @@ def quantize_gaussians(pos, scale, rot, color, opacity, W, H, rules=None):
     sc_y = np.clip((log_scale[:, 1] - min_sy) / (max_sy - min_sy), 0.0, 1.0) * 65535
     
     # Rotation
-    rot_np = np.nan_to_num(rot, nan=0.0, posinf=0.0, neginf=0.0)
-    rot_norm = rot_np % (2 * np.pi)
+    rot_norm = rot % (2 * np.pi)
     r_q = (rot_norm / (2 * np.pi)) * 65535
     
     # Colors & Opacity
-    color_np = np.nan_to_num(color, nan=0.0, posinf=1.0, neginf=0.0)
-    c_r = np.clip(color_np[:, 0], 0.0, 1.0) * 255
-    c_g = np.clip(color_np[:, 1], 0.0, 1.0) * 255
-    c_b = np.clip(color_np[:, 2], 0.0, 1.0) * 255
+    c_r = np.clip(color[:, 0], 0.0, 1.0) * 255
+    c_g = np.clip(color[:, 1], 0.0, 1.0) * 255
+    c_b = np.clip(color[:, 2], 0.0, 1.0) * 255
     
-    opacity_np = np.nan_to_num(opacity, nan=0.0, posinf=1.0, neginf=0.0)
-    opac = np.clip(opacity_np, 0.0, 1.0) * 255
+    opac = np.clip(opacity, 0.0, 1.0) * 255
     
     # Pack into structured array
     # '<H' is little-endian uint16, '<B' is little-endian uint8

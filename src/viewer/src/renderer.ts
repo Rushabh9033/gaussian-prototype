@@ -161,7 +161,7 @@ export class GaussianRenderer {
         return shader;
     }
     
-    public loadSplats(data: Float32Array, width: number, height: number) {
+    public loadSplats(data: Float32Array, width: number, height: number, preserveView = false) {
         this.encodedWidth = width;
         this.encodedHeight = height;
         
@@ -179,7 +179,11 @@ export class GaussianRenderer {
         gl.bindBuffer(gl.ARRAY_BUFFER, this.instanceBuffer);
         gl.bufferData(gl.ARRAY_BUFFER, reversed, gl.STATIC_DRAW);
         
-        this.fitToScreen();
+        if (!preserveView) {
+            this.fitToScreen();
+        } else {
+            this.render();
+        }
     }
     
     public fitToScreen() {
