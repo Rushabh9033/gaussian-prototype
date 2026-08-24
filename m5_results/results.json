@@ -1,37 +1,64 @@
 {
   "status": "NO_MEASURABLE_GAIN",
-  "best_config": "VRC_B",
+  "best_config": "VRC_C",
+  "peak_ram_bytes": 159776768,
+  "package_size_bytes": 1013001,
   "reconstruction_benchmark": [
     {
       "scale": "2x",
       "metrics": {
         "Lanczos": {
-          "psnr": 26.843342133575362,
-          "ssim": 0.8601619155708824,
-          "edge_f1": 0.8779959143198892,
-          "ringing_percent": 0.42045454545454547,
-          "runtime_ms": 4.001140594482422
+          "global_psnr": 26.843342133575362,
+          "global_ssim": 0.8601619155708824,
+          "global_edge_precision": 0.9810709838105877,
+          "global_edge_recall": 0.7945205479451283,
+          "global_edge_f1": 0.8779959143198892,
+          "global_gradient_energy": 14174.895656565657,
+          "global_laplacian_variance": 297.18504743393527,
+          "global_ringing_percent": 0.42045454545454547,
+          "runtime_ms": 11.89279556274414
         },
         "VRC_A": {
-          "psnr": 25.84775034248676,
-          "ssim": 0.8566225769520006,
-          "edge_f1": 0.9091541630659477,
-          "ringing_percent": 3.1313131313131315,
-          "runtime_ms": 64.12053108215332
+          "global_psnr": 25.436146776969494,
+          "global_ssim": 0.8307407197956915,
+          "global_edge_precision": 0.8973335928375926,
+          "global_edge_recall": 0.8962401632176337,
+          "global_edge_f1": 0.8967865442298245,
+          "global_gradient_energy": 21120.833156565655,
+          "global_laplacian_variance": 1094.2652446682737,
+          "global_ringing_percent": 4.391414141414141,
+          "runtime_ms": 198.41933250427246,
+          "curve_fitting_error": 0.1726268172373067,
+          "vector_coverage_percent": 27.63490378856659,
+          "residual_energy_level_0": 0.030120117589831352
         },
         "VRC_B": {
-          "psnr": 25.85713809283321,
-          "ssim": 0.8570178481913217,
-          "edge_f1": 0.9072234321857643,
-          "ringing_percent": 3.0643939393939394,
-          "runtime_ms": 27.44436264038086
+          "global_psnr": 25.716171156975275,
+          "global_ssim": 0.8475245472122953,
+          "global_edge_precision": 0.9201459262260924,
+          "global_edge_recall": 0.890410958904023,
+          "global_edge_f1": 0.9050342718077137,
+          "global_gradient_energy": 20932.49070707071,
+          "global_laplacian_variance": 962.1422839990819,
+          "global_ringing_percent": 3.553030303030303,
+          "runtime_ms": 119.6589469909668,
+          "curve_fitting_error": 0.16150265947176867,
+          "vector_coverage_percent": 14.558695256710052,
+          "residual_energy_level_0": 0.016495365649461746
         },
         "VRC_C": {
-          "psnr": 25.86955758468057,
-          "ssim": 0.8578928500829391,
-          "edge_f1": 0.9068647338557495,
-          "ringing_percent": 2.9419191919191916,
-          "runtime_ms": 23.746013641357422
+          "global_psnr": 25.892686671408875,
+          "global_ssim": 0.8538859576807466,
+          "global_edge_precision": 0.925150005084824,
+          "global_edge_recall": 0.8902166520935694,
+          "global_edge_f1": 0.9073472144050232,
+          "global_gradient_energy": 20823.8827020202,
+          "global_laplacian_variance": 906.8906259814049,
+          "global_ringing_percent": 3.2032828282828283,
+          "runtime_ms": 86.5025520324707,
+          "curve_fitting_error": 0.17282694335887375,
+          "vector_coverage_percent": 7.859496772289276,
+          "residual_energy_level_0": 0.011812121607363224
         }
       }
     },
@@ -39,32 +66,57 @@
       "scale": "4x",
       "metrics": {
         "Lanczos": {
-          "psnr": 22.84097382158905,
-          "ssim": 0.6516857732033371,
-          "edge_f1": 0.49797374122930205,
-          "ringing_percent": 3.7083333333333335,
-          "runtime_ms": 0.9982585906982422
+          "global_psnr": 22.84097382158905,
+          "global_ssim": 0.6516857732033371,
+          "global_edge_precision": 0.9394479073906383,
+          "global_edge_recall": 0.3387739240260042,
+          "global_edge_f1": 0.49797374122930205,
+          "global_gradient_energy": 5906.6821717171715,
+          "global_laplacian_variance": 24.871085577364553,
+          "global_ringing_percent": 3.7083333333333335,
+          "runtime_ms": 0.9989738464355469
         },
         "VRC_A": {
-          "psnr": 22.333368967856337,
-          "ssim": 0.6481513039364901,
-          "edge_f1": 0.6105581864534176,
-          "ringing_percent": 7.521464646464647,
-          "runtime_ms": 17.50493049621582
+          "global_psnr": 21.998827894148487,
+          "global_ssim": 0.6155952702454499,
+          "global_edge_precision": 0.7560281766457929,
+          "global_edge_recall": 0.5747595453220077,
+          "global_edge_f1": 0.6530484217129741,
+          "global_gradient_energy": 12164.1801010101,
+          "global_laplacian_variance": 323.12185584235664,
+          "global_ringing_percent": 10.669191919191919,
+          "runtime_ms": 74.1581916809082,
+          "curve_fitting_error": 0.19209601972350607,
+          "vector_coverage_percent": 22.65607714653015,
+          "residual_energy_level_0": 0.04330642893910408
         },
         "VRC_B": {
-          "psnr": 22.343320585458052,
-          "ssim": 0.6489899492695144,
-          "edge_f1": 0.6162675054949351,
-          "ringing_percent": 7.411616161616162,
-          "runtime_ms": 14.855623245239258
+          "global_psnr": 22.02317913575023,
+          "global_ssim": 0.6167240164554265,
+          "global_edge_precision": 0.7601228707064004,
+          "global_edge_recall": 0.5610609151850227,
+          "global_edge_f1": 0.645595620719872,
+          "global_gradient_energy": 12000.255606060606,
+          "global_laplacian_variance": 285.78253758401564,
+          "global_ringing_percent": 10.55429292929293,
+          "runtime_ms": 61.02395057678223,
+          "curve_fitting_error": 0.2102383672480983,
+          "vector_coverage_percent": 15.876397490501404,
+          "residual_energy_level_0": 0.033124346286058426
         },
         "VRC_C": {
-          "psnr": 22.34621001166615,
-          "ssim": 0.6504368465197717,
-          "edge_f1": 0.6110829521927023,
-          "ringing_percent": 7.353535353535354,
-          "runtime_ms": 10.999441146850586
+          "global_psnr": 22.21521740460167,
+          "global_ssim": 0.6318506357812695,
+          "global_edge_precision": 0.7771625261896472,
+          "global_edge_recall": 0.5430875352180566,
+          "global_edge_f1": 0.639374756085921,
+          "global_gradient_energy": 11628.199848484848,
+          "global_laplacian_variance": 225.08952013825117,
+          "global_ringing_percent": 9.147727272727273,
+          "runtime_ms": 40.207862854003906,
+          "curve_fitting_error": 0.1641445398354435,
+          "vector_coverage_percent": 10.658526420593262,
+          "residual_energy_level_0": 0.025292355567216873
         }
       }
     },
@@ -72,32 +124,57 @@
       "scale": "8x",
       "metrics": {
         "Lanczos": {
-          "psnr": 20.39287395413333,
-          "ssim": 0.46752816040115713,
-          "edge_f1": 0.048339321234351994,
-          "ringing_percent": 16.957070707070706,
-          "runtime_ms": 1.001119613647461
+          "global_psnr": 20.39287395413333,
+          "global_ssim": 0.46752816040115713,
+          "global_edge_precision": 0.9906103286338469,
+          "global_edge_recall": 0.02477411833284516,
+          "global_edge_f1": 0.048339321234351994,
+          "global_gradient_energy": 2492.71702020202,
+          "global_laplacian_variance": 4.239292906336088,
+          "global_ringing_percent": 16.957070707070706,
+          "runtime_ms": 0.9987354278564453
         },
         "VRC_A": {
-          "psnr": 19.915109505097213,
-          "ssim": 0.45620421324508387,
-          "edge_f1": 0.25454545422107566,
-          "ringing_percent": 19.49621212121212,
-          "runtime_ms": 12.013912200927734
+          "global_psnr": 19.54570288056868,
+          "global_ssim": 0.4155122081909986,
+          "global_edge_precision": 0.6056965704319693,
+          "global_edge_recall": 0.3270183619935561,
+          "global_edge_f1": 0.42472548305905905,
+          "global_gradient_energy": 7538.633207070707,
+          "global_laplacian_variance": 262.94948082322594,
+          "global_ringing_percent": 23.789141414141415,
+          "runtime_ms": 46.01621627807617,
+          "curve_fitting_error": 0.19069091073521335,
+          "vector_coverage_percent": 15.765270590782166,
+          "residual_energy_level_0": 0.0483836755156517
         },
         "VRC_B": {
-          "psnr": 19.902683935976974,
-          "ssim": 0.45465121877309717,
-          "edge_f1": 0.25599724490158204,
-          "ringing_percent": 19.53030303030303,
-          "runtime_ms": 10.508060455322266
+          "global_psnr": 19.715090760759928,
+          "global_ssim": 0.435278244117919,
+          "global_edge_precision": 0.6070857751729869,
+          "global_edge_recall": 0.23831730302144774,
+          "global_edge_f1": 0.34227233896468084,
+          "global_gradient_energy": 6340.068712121212,
+          "global_laplacian_variance": 121.37198151958344,
+          "global_ringing_percent": 21.28787878787879,
+          "runtime_ms": 38.38348388671875,
+          "curve_fitting_error": 0.16940405727676597,
+          "vector_coverage_percent": 7.931189239025116,
+          "residual_energy_level_0": 0.03818826377391815
         },
         "VRC_C": {
-          "psnr": 19.903067917585894,
-          "ssim": 0.4547761331900431,
-          "edge_f1": 0.25312637055456183,
-          "ringing_percent": 19.422979797979796,
-          "runtime_ms": 8.00323486328125
+          "global_psnr": 19.61282789640991,
+          "global_ssim": 0.4314396796441651,
+          "global_edge_precision": 0.6021916411823134,
+          "global_edge_recall": 0.2457981152239147,
+          "global_edge_f1": 0.349102260053127,
+          "global_gradient_energy": 6895.685227272727,
+          "global_laplacian_variance": 160.61150220242195,
+          "global_ringing_percent": 22.08585858585859,
+          "runtime_ms": 32.01556205749512,
+          "curve_fitting_error": 0.17842196728933263,
+          "vector_coverage_percent": 6.9382645189762115,
+          "residual_energy_level_0": 0.03417596220970154
         }
       }
     }
@@ -105,18 +182,18 @@
   "operational_metrics": [
     {
       "scale": "2x",
-      "max_consistency_error": 38.0,
-      "mean_consistency_error": 0.5739562511444092
+      "max_consistency_error": 39.0,
+      "mean_consistency_error": 0.5818518518518518
     },
     {
       "scale": "4x",
-      "max_consistency_error": 38.0,
-      "mean_consistency_error": 0.7809596061706543
+      "max_consistency_error": 46.0,
+      "mean_consistency_error": 0.8343392255892256
     },
     {
       "scale": "8x",
-      "max_consistency_error": 36.0,
-      "mean_consistency_error": 0.8098484873771667
+      "max_consistency_error": 50.0,
+      "mean_consistency_error": 0.883526936026936
     }
   ]
 }
