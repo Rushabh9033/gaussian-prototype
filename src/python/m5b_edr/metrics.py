@@ -18,38 +18,27 @@ def color_histogram_distance(img1, img2, bins=32):
     
     return float(cv2.compareHist(hist1, hist2, cv2.HISTCMP_BHATTACHARYYA))
 
-def compute_edge_orientation_error(theta_gt, theta_pred, mask_gt):
+def compute_edge_orientation_error(theta_gt, theta_pred, strength_gt, threshold=0.1):
     """
-    Mean angular error (in radians) only where mask_gt > 0.
-    Angle difference wraps at pi.
+    Mean angular error (in radians and degrees) only where ground-truth edge strength exceeds a documented threshold.
+    Angle difference wraps at pi because edge orientation is periodic over pi (not 2pi).
     """
-    valid = mask_gt > 0
+    valid = strength_gt > threshold
     if not np.any(valid):
-        return 0.0
+        return 0.0, 0.0
         
     diff = np.abs(theta_gt[valid] - theta_pred[valid])
     diff = np.minimum(diff, np.pi - diff)
-    return float(np.mean(diff))
+    mean_rad = float(np.mean(diff))
+    mean_deg = float(np.degrees(mean_rad))
+    return mean_rad, mean_deg
 
-def compute_tile_seam_error(img, tile_size=512):
+def compute_tiling_equivalence_error(untiled_img, tiled_img):
     """
-    Measures unnatural jumps across tile boundaries.
+    Genuine tiling-equivalence metric.
+    Converts to float32 before subtraction to avoid uint8 wrap-around.
+    Returns max absolute difference and mean absolute difference.
     """
-    h, w = img.shape[:2]
-    errors = []
-    
-    # Horizontal seams (y = k * tile_size)
-    for y in range(tile_size, h, tile_size):
-        diff = np.abs(img[y, :] - img[y-1, :])
-        errors.append(diff)
-        
-    # Vertical seams (x = k * tile_size)
-    for x in range(tile_size, w, tile_size):
-        diff = np.abs(img[:, x] - img[:, x-1])
-        errors.append(diff)
-        
-    if not errors:
-        return 0.0, 0.0
-        
-    all_err = np.concatenate([e.flatten() for e in errors])
-    return float(np.max(all_err)), float(np.mean(all_err))
+    # Prevent uint8 wrap (e.g. 255 - 0 = 255 instead of 1)
+    diff = np.abs(untiled_img.astype(np.float32) - tiled_img.astype(np.float32))
+    return float(np.max(diff)), float(np.mean(diff))
