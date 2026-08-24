@@ -1,0 +1,17 @@
+{
+  "utc_timestamp": "2026-08-24T10:35:14.643992+00:00",
+  "code_commit_validated": "15a1c3f9584041227254b84c9cadd253c2d295f8",
+  "platform": "Windows AMD64",
+  "python_version": "3.11.15",
+  "pytest_command": "E:\\SFI\\.venv\\Scripts\\python.exe -m pytest tests",
+  "pytest_exit_code": 0,
+  "tests_passed": 43,
+  "tests_failed": 0,
+  "viewer_build_command": "npm run build",
+  "viewer_build_exit_code": 0,
+  "hashes": {
+    "results.json": "f3b11cefc2a50ee3578195732a51d45ca9acde9fcd9073fbbf03e1a9e9e482cd",
+    "evidence.jsonl": "a6c0a264aefffbcde6c93cc6d6f7d4bcd610dacaf55181048738271d311b8776",
+    "vrc_package.zip": "a3593d53e988a7426309a0684ef7f7fa56b437cec856d4f7ce8268e0dc967a8b"
+  }
+}
