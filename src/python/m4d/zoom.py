@@ -18,40 +18,13 @@ def zoom_lanczos(img_srgb: np.ndarray, target_shape: tuple) -> np.ndarray:
     pil_resized = pil_img.resize(target_shape, resample=Image.Resampling.LANCZOS)
     return np.array(pil_resized)
 
-def structure_tensor_edges(luma: np.ndarray):
-    """Compute structure tensor to find edge confidence and orientation."""
-    dx = cv2.Scharr(luma, cv2.CV_64F, 1, 0)
-    dy = cv2.Scharr(luma, cv2.CV_64F, 0, 1)
-    
-    # Elements of the structure tensor
-    Ixx = dx**2
-    Iyy = dy**2
-    Ixy = dx * dy
-    
-    # Smooth them to aggregate neighborhood
-    Sxx = cv2.GaussianBlur(Ixx, (3, 3), 1.0)
-    Syy = cv2.GaussianBlur(Iyy, (3, 3), 1.0)
-    Sxy = cv2.GaussianBlur(Ixy, (3, 3), 1.0)
-    
-    # Eigenvalues
-    trace = Sxx + Syy
-    det = Sxx * Syy - Sxy**2
-    diff = np.sqrt(np.maximum((Sxx - Syy)**2 + 4 * Sxy**2, 0))
-    
-    lambda1 = (trace + diff) / 2
-    lambda2 = (trace - diff) / 2
-    
-    # Confidence: difference between eigenvalues indicates strong edge vs flat/corner
-    coherence = np.where(lambda1 + lambda2 > 1e-5, (lambda1 - lambda2) / (lambda1 + lambda2 + 1e-5), 0)
-    
-    return coherence, dx, dy
-
-def zoom_hybrid(img_srgb: np.ndarray, target_shape: tuple) -> np.ndarray:
+def zoom_hybrid(img_srgb: np.ndarray, target_shape: tuple, strength: float = 1.0) -> np.ndarray:
     """
     Original Classical Edge-Aware Hybrid:
     - sRGB to linear
     - Lanczos upscale
     - Luminance extraction & Structure tensor edge detection
+    - Direction-aware sharpening (sharpening across edges)
     - Conservative residual sharpening with local min/max anti-ringing
     - Linear to sRGB
     """
@@ -59,28 +32,41 @@ def zoom_hybrid(img_srgb: np.ndarray, target_shape: tuple) -> np.ndarray:
     lin_img = srgb_to_linear(img_srgb)
     
     # 2. Base upscale (Lanczos)
-    h_target, w_target = target_shape[1], target_shape[0]
-    
-    # Upscale channels individually or via PIL (PIL needs uint8 or handles float poorly, 
-    # so we'll use OpenCV's Lanczos4 for float data).
     base_up = cv2.resize(lin_img, target_shape, interpolation=cv2.INTER_LANCZOS4)
     
     # 3. Luminance & Edges
     luma_up = get_luminance(base_up)
-    coherence, dx, dy = structure_tensor_edges(luma_up)
     
-    # 4. Sharpening: we use an unsharp mask modulated by edge coherence
-    blur = cv2.GaussianBlur(base_up, (5, 5), 1.5)
-    high_freq = base_up - blur
+    # First derivatives (Scharr is more rotationally symmetric than Sobel)
+    dx = cv2.Scharr(luma_up, cv2.CV_64F, 1, 0)
+    dy = cv2.Scharr(luma_up, cv2.CV_64F, 0, 1)
     
-    # Apply sharpening proportional to coherence
-    coherence_expanded = np.expand_dims(coherence, axis=-1)
-    sharpened = base_up + high_freq * (coherence_expanded * 1.5) # Conservative sharpening factor
+    # Gradient magnitude
+    mag = np.sqrt(dx**2 + dy**2)
+    mag_max = mag.max() + 1e-5
+    
+    # Normalized gradient direction vectors (nx, ny) point across the edge
+    nx = dx / (mag + 1e-5)
+    ny = dy / (mag + 1e-5)
+    
+    # Second derivatives
+    dxx = cv2.Scharr(dx, cv2.CV_64F, 1, 0)
+    dyy = cv2.Scharr(dy, cv2.CV_64F, 0, 1)
+    dxy = cv2.Scharr(dx, cv2.CV_64F, 0, 1)
+    
+    # Directional second derivative across the edge
+    D_nn = nx**2 * dxx + 2 * nx * ny * dxy + ny**2 * dyy
+    
+    # 4. Sharpening: subtract D_nn proportional to edge strength
+    edge_weight = mag / mag_max
+    # Normalize D_nn to roughly match image scale
+    sharpen_term = -D_nn * edge_weight * strength * 0.05
+    
+    sharpen_term_rgb = np.expand_dims(sharpen_term, axis=-1)
+    sharpened = base_up + sharpen_term_rgb
     
     # 5. Anti-ringing clamp
-    # Find local min/max from the base upscaled image (which has some ringing, but less than sharpened)
-    # Actually, a better anti-ringing is clamping to the local min/max of the *original* pixels mapped to upscaled space,
-    # but using morphological operations on base_up is standard.
+    # Use morphology on the base upscaled image
     kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3))
     local_min = cv2.erode(base_up, kernel)
     local_max = cv2.dilate(base_up, kernel)

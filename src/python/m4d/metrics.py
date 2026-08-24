@@ -25,12 +25,14 @@ def edge_f1_score(true_img: np.ndarray, pred_img: np.ndarray, tolerance: int = 1
     true_dilated = ndimage.binary_dilation(true_edges, structure=struct, iterations=tolerance)
     pred_dilated = ndimage.binary_dilation(pred_edges, structure=struct, iterations=tolerance)
     
-    true_positives = np.logical_and(pred_edges, true_dilated).sum()
-    false_positives = np.logical_and(pred_edges, ~true_dilated).sum()
-    false_negatives = np.logical_and(true_edges, ~pred_dilated).sum()
+    matched_pred = np.logical_and(pred_edges, true_dilated).sum()
+    matched_true = np.logical_and(true_edges, pred_dilated).sum()
     
-    precision = true_positives / (true_positives + false_positives + 1e-9)
-    recall = true_positives / (true_positives + false_negatives + 1e-9)
+    total_pred = pred_edges.sum()
+    total_true = true_edges.sum()
+    
+    precision = matched_pred / (total_pred + 1e-9)
+    recall = matched_true / (total_true + 1e-9)
     f1 = 2 * (precision * recall) / (precision + recall + 1e-9)
     
     return {
@@ -51,17 +53,19 @@ def compute_laplacian_variance(img: np.ndarray) -> float:
 
 def calculate_ringing_percentage(true_img: np.ndarray, pred_img: np.ndarray) -> float:
     """Calculate percentage of pixels in pred_img that overshoot/undershoot the true_img local neighborhood."""
-    gray_true = cv2.cvtColor(true_img, cv2.COLOR_RGB2GRAY)
-    gray_pred = cv2.cvtColor(pred_img, cv2.COLOR_RGB2GRAY)
+    gray_true = cv2.cvtColor(true_img, cv2.COLOR_RGB2GRAY).astype(np.int16)
+    gray_pred = cv2.cvtColor(pred_img, cv2.COLOR_RGB2GRAY).astype(np.int16)
     
     kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3))
-    local_min = cv2.erode(gray_true, kernel)
-    local_max = cv2.dilate(gray_true, kernel)
+    # Erode and dilate on uint8 is safer, then cast
+    gray_true_u8 = cv2.cvtColor(true_img, cv2.COLOR_RGB2GRAY)
+    local_min = cv2.erode(gray_true_u8, kernel).astype(np.int16)
+    local_max = cv2.dilate(gray_true_u8, kernel).astype(np.int16)
     
     # Ringing/overshoot: pixels outside [local_min - threshold, local_max + threshold]
     threshold = 5
     overshoot = (gray_pred > local_max + threshold)
-    undershoot = (gray_pred < local_min.astype(np.int16) - threshold)
+    undershoot = (gray_pred < local_min - threshold)
     
     ringing_mask = np.logical_or(overshoot, undershoot)
     ringing_pct = ringing_mask.sum() / ringing_mask.size * 100.0

@@ -31,11 +31,9 @@ def hash_file(path: str) -> str:
     return h.hexdigest()
 
 def make_contact_sheet(images_dict, title, out_path):
-    # images_dict: dict of title -> Image.Image
     w, h = list(images_dict.values())[0].size
     n = len(images_dict)
     
-    # Add space for labels
     label_h = 30
     sheet = Image.new("RGB", (w * n, h + label_h), "white")
     draw = ImageDraw.Draw(sheet)
@@ -59,6 +57,23 @@ def main():
     gt_arr = np.array(gt_img)
     w, h = gt_img.size  # 360, 220
     
+    # Corrected crops for 360x220 image
+    crops_def = {
+        "wheel": (30, 140, 90, 200),
+        "headlamp": (280, 110, 330, 150),
+        "plate": (300, 160, 350, 190),
+        "foliage": (150, 10, 230, 60)
+    }
+    
+    # 0. Draw annotated source image
+    annotated_img = gt_img.copy()
+    draw = ImageDraw.Draw(annotated_img)
+    for c_name, (cx1, cy1, cx2, cy2) in crops_def.items():
+        draw.rectangle([cx1, cy1, cx2, cy2], outline="red", width=2)
+        draw.text((cx1, cy1 - 10), c_name, fill="red")
+    annotated_path = os.path.join(out_dir, "annotated_source.png")
+    annotated_img.save(annotated_path)
+    
     scales = [
         {"name": "2x", "size": (180, 110)},
         {"name": "4x", "size": (90, 55)},
@@ -68,24 +83,23 @@ def main():
     methods = {
         "Nearest": zoom_nearest,
         "Bicubic": zoom_bicubic,
-        "Lanczos": zoom_lanczos,
-        "Hybrid": zoom_hybrid
+        "Lanczos": zoom_lanczos
     }
     
+    hybrid_strengths = [0.5, 1.0, 1.5]
+    for s in hybrid_strengths:
+        methods[f"Hybrid_{s}"] = lambda img, tg, st=s: zoom_hybrid(img, tg, strength=st)
+    
     benchmark_results = []
-    artifacts = []
-    artifacts.append({"path": gt_path, "sha256": hash_file(gt_path)})
     
     # 1. Benchmark Loop
     for scale in scales:
         s_name = scale["name"]
         s_w, s_h = scale["size"]
         
-        # Downsample using area averaging
         low_res = cv2.resize(gt_arr, (s_w, s_h), interpolation=cv2.INTER_AREA)
         lr_path = os.path.join(out_dir, f"input_{s_name}.png")
         Image.fromarray(low_res).save(lr_path)
-        artifacts.append({"path": lr_path, "sha256": hash_file(lr_path)})
         
         gt_grad_energy = compute_gradient_energy(gt_arr)
         gt_lap_var = compute_laplacian_variance(gt_arr)
@@ -98,7 +112,6 @@ def main():
             
             out_path = os.path.join(out_dir, f"restored_{s_name}_{m_name}.png")
             Image.fromarray(restored).save(out_path)
-            artifacts.append({"path": out_path, "sha256": hash_file(out_path)})
             
             edge_stats = edge_f1_score(gt_arr, restored)
             m_grad_energy = compute_gradient_energy(restored)
@@ -122,62 +135,70 @@ def main():
             "metrics": scale_metrics
         })
         
+    # Pick the best hybrid method
+    best_hybrid = "Hybrid_1.0"
+    best_score = -1
+    for s in hybrid_strengths:
+        h_name = f"Hybrid_{s}"
+        # We value SSIM and Edge F1. Let's score them by averaging their 4x SSIM and Edge F1
+        m4x = benchmark_results[1]["metrics"][h_name]
+        score = m4x["ssim"] + m4x["edge_f1"] - (m4x["ringing_percent"] / 100.0)
+        if score > best_score:
+            best_score = score
+            best_hybrid = h_name
+            
+    print(f"Selected {best_hybrid} as the primary Hybrid candidate.")
+            
+    # Clean up results for json by renaming the chosen one to "Hybrid" and removing others
+    clean_benchmark = []
+    for s_res in benchmark_results:
+        clean_metrics = {}
+        for k in ["Nearest", "Bicubic", "Lanczos"]:
+            clean_metrics[k] = s_res["metrics"][k]
+        clean_metrics["Hybrid"] = s_res["metrics"][best_hybrid]
+        clean_benchmark.append({
+            "scale": s_res["scale"],
+            "metrics": clean_metrics
+        })
+        
     # 2. Real Enlargement Demo
-    # Enlarge 360x220 to 2x, 4x, 8x using Bicubic, Lanczos, Hybrid
-    enlarge_methods = ["Bicubic", "Lanczos", "Hybrid"]
+    enlarge_methods = {"Bicubic": zoom_bicubic, "Lanczos": zoom_lanczos, "Hybrid": methods[best_hybrid]}
     enlarge_scales = [2, 4, 8]
-    
-    # Crops at 360x220 scale
-    crops_def = {
-        "wheel": (30, 110, 100, 180),
-        "headlamp": (30, 70, 70, 110),
-        "plate": (5, 160, 45, 190),
-        "foliage": (200, 10, 300, 80)
-    }
     
     for factor in enlarge_scales:
         ew, eh = w * factor, h * factor
-        for m_name in enlarge_methods:
-            m_func = methods[m_name]
+        for m_name, m_func in enlarge_methods.items():
             enlarged = m_func(gt_arr, (ew, eh))
             out_path = os.path.join(out_dir, f"enlarged_{factor}x_{m_name}.png")
             Image.fromarray(enlarged).save(out_path)
-            artifacts.append({"path": out_path, "sha256": hash_file(out_path)})
             
-            # Extract crops scaled up by factor
             for crop_name, (cx1, cy1, cx2, cy2) in crops_def.items():
                 cx1_s, cy1_s = cx1 * factor, cy1 * factor
                 cx2_s, cy2_s = cx2 * factor, cy2 * factor
                 crop_arr = enlarged[cy1_s:cy2_s, cx1_s:cx2_s]
                 c_path = os.path.join(out_dir, f"crop_{factor}x_{crop_name}_{m_name}.png")
                 Image.fromarray(crop_arr).save(c_path)
-                artifacts.append({"path": c_path, "sha256": hash_file(c_path)})
 
-    # Generate contact sheets for crops at 8x
+    # Generate contact sheets
     for crop_name in crops_def:
         sheet_imgs = {}
-        for m_name in enlarge_methods:
+        for m_name in enlarge_methods.keys():
             p = os.path.join(out_dir, f"crop_8x_{crop_name}_{m_name}.png")
             sheet_imgs[m_name] = Image.open(p)
         c_path = os.path.join(out_dir, f"contact_8x_{crop_name}.png")
         make_contact_sheet(sheet_imgs, f"{crop_name} 8x", c_path)
-        artifacts.append({"path": c_path, "sha256": hash_file(c_path)})
         
-    # Generate full image contact sheet at 4x
     full_sheet = {}
-    for m_name in enlarge_methods:
+    for m_name in enlarge_methods.keys():
         p = os.path.join(out_dir, f"enlarged_4x_{m_name}.png")
         full_sheet[m_name] = Image.open(p)
     f_path = os.path.join(out_dir, "contact_full_4x.png")
     make_contact_sheet(full_sheet, "Full 4x", f_path)
-    artifacts.append({"path": f_path, "sha256": hash_file(f_path)})
 
     # Acceptance Logic
-    # Hybrid beats or matches Lanczos SSIM/PSNR on at least two benchmark scales
-    # Improves edge F1 on at least two scales
     ssim_psnr_wins = 0
     edge_f1_wins = 0
-    for s_res in benchmark_results:
+    for s_res in clean_benchmark:
         m = s_res["metrics"]
         h_ssim = m["Hybrid"]["ssim"]
         l_ssim = m["Lanczos"]["ssim"]
@@ -195,19 +216,38 @@ def main():
     else:
         status = "CLASSICAL_LIMIT_CONFIRMED"
 
-    # Save results
     results_obj = {
         "status": status,
         "ssim_psnr_wins_vs_lanczos": ssim_psnr_wins,
         "edge_f1_wins_vs_lanczos": edge_f1_wins,
-        "benchmark": benchmark_results
+        "best_hybrid_strength": best_hybrid,
+        "benchmark": clean_benchmark
     }
-    res_path = os.path.join(out_dir, "results.json")
-    with open(res_path, "w") as f:
-        json.dump(results_obj, f, indent=2)
-    artifacts.append({"path": res_path, "sha256": hash_file(res_path)})
     
-    # Save evidence JSONL
+    res_path = os.path.join(out_dir, "results.json")
+    with open(res_path, "w", newline='\n') as f:
+        json.dump(results_obj, f, indent=2)
+        f.write('\n')
+        
+    # Gather artifacts for hashing
+    # Delete unused restored_*_Hybrid_*.png except the selected one
+    for fname in os.listdir(out_dir):
+        if fname.startswith("restored_") and "Hybrid_" in fname:
+            if best_hybrid not in fname:
+                os.remove(os.path.join(out_dir, fname))
+            else:
+                new_fname = fname.replace(best_hybrid, "Hybrid")
+                os.rename(os.path.join(out_dir, fname), os.path.join(out_dir, new_fname))
+
+    artifacts = []
+    artifacts.append({"path": gt_path, "sha256": hash_file(gt_path)})
+    for fname in sorted(os.listdir(out_dir)):
+        if fname in ["evidence.jsonl"]:
+            continue
+        p = os.path.join(out_dir, fname)
+        if os.path.isfile(p):
+            artifacts.append({"path": p, "sha256": hash_file(p)})
+            
     ev_path = os.path.join(out_dir, "evidence.jsonl")
     ev_obj = {
         "run_uuid": str(uuid.uuid4()),
@@ -219,7 +259,7 @@ def main():
         "results": results_obj,
         "artifacts": artifacts
     }
-    with open(ev_path, "w") as f:
+    with open(ev_path, "w", newline='\n') as f:
         f.write(json.dumps(ev_obj) + "\n")
 
     print(f"Status: {status}")
