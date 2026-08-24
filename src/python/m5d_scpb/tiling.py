@@ -17,7 +17,7 @@ def process_tile(source_tile, candidate_tile, scale_factor, base_sigma, config, 
     
     return out
 
-def reconstruct_tiled(source_full, scale_factor, base_sigma, config, max_iters, initial_step, target_shape=None, tile_size=64, padding=16):
+def reconstruct_tiled(source_full, scale_factor, base_sigma, config, max_iters, initial_step, target_shape=None, tile_size=64, padding=128):
     """
     Run SCPB using overlapping tiles.
     """

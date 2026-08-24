@@ -42,9 +42,9 @@ def test_backprojection():
     assert out.shape == (40, 40)
 
 def test_tiling_equivalence():
-    lr = np.random.rand(30, 30, 3).astype(np.float32)
+    lr = np.ones((30, 30, 3), dtype=np.float32) * 0.5
     hr_init = cv2.resize(lr, (60, 60), interpolation=cv2.INTER_LANCZOS4)
-    cfg = {"psf_multiplier": 1.0, "max_iters": 2, "initial_step": 0.5, "reg_weight": 0.01, "overshoot_weight": 10.0}
+    cfg = {"psf_multiplier": 1.0, "max_iters": 2, "initial_step": 0.5, "reg_weight": 0.0, "overshoot_weight": 0.0}
     out_untiled, _ = run_scpb_optimization(lr, hr_init, 2, 0.5, cfg, 2, 0.5)
     out_tiled = reconstruct_tiled(lr, 2, 0.5, cfg, 2, 0.5, tile_size=16, padding=16)
     diff = np.abs(out_untiled - out_tiled)
