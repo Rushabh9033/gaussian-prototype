@@ -2,26 +2,29 @@ import numpy as np
 import cv2
 from scipy.spatial import cKDTree
 
-def extract_patches(img, patch_size=5, stride=2):
+def extract_patches(img, patch_size=5, stride=1, global_offset_x=0, global_offset_y=0):
     """
-    Extracts all overlapping patches of patch_size x patch_size from img.
-    Returns: patches array, coordinates array
+    Extracts patches from an image. If the image is a tile from a larger image, 
+    global offsets ensure the local extraction aligns with the global stride grid.
     """
     h, w = img.shape[:2]
-    # To keep it fast, we can use stride.
-    y_coords = np.arange(0, h - patch_size + 1, stride)
-    x_coords = np.arange(0, w - patch_size + 1, stride)
     
-    # Vectorized patch extraction using stride tricks or just simple loop over coordinates
-    num_patches = len(y_coords) * len(x_coords)
-    channels = img.shape[2] if img.ndim == 3 else 1
+    start_x = (stride - (global_offset_x % stride)) % stride
+    start_y = (stride - (global_offset_y % stride)) % stride
     
-    patches = np.empty((num_patches, patch_size, patch_size, channels), dtype=np.float32)
-    coords = np.empty((num_patches, 2), dtype=np.int32)
+    num_y = max(0, (h - start_y - patch_size) // stride + 1)
+    num_x = max(0, (w - start_x - patch_size) // stride + 1)
+    
+    if num_y <= 0 or num_x <= 0:
+        channels = img.shape[2] if img.ndim == 3 else 1
+        return np.zeros((0, patch_size, patch_size, channels), dtype=img.dtype), np.zeros((0, 2), dtype=int)
+        
+    patches = np.zeros((num_y * num_x, patch_size, patch_size, img.shape[-1] if img.ndim == 3 else 1), dtype=img.dtype)
+    coords = np.zeros((num_y * num_x, 2), dtype=int)
     
     idx = 0
-    for y in y_coords:
-        for x in x_coords:
+    for y in range(start_y, h - patch_size + 1, stride):
+        for x in range(start_x, w - patch_size + 1, stride):
             p = img[y:y+patch_size, x:x+patch_size]
             if p.ndim == 2:
                 p = p[..., np.newaxis]

@@ -1,7 +1,7 @@
 # Milestone 5C Closure: Internal Self-Example Patch Reconstruction (ISEPR)
 
 ## Objective
-The objective of this milestone was to test whether repeated structures and textures already present inside a single photograph can provide useful source-supported high-frequency residuals during enlargement. This strictly mathematical experiment prevents any hallucination by only transferring true pixel differences sourced directly from the input.
+The objective of this milestone was to test whether repeated structures and textures already present inside a single photograph can provide useful source-supported high-frequency residuals during enlargement. 
 
 ## Architecture
 
@@ -11,30 +11,44 @@ This algorithm is based on the general published principle that natural images c
 2. **Cross-Scale Patch Dictionary**: High-frequency residuals are calculated dynamically per scale. The Low surrogate is formed by mimicking the target scale downsampling/upsampling process. Residual = High_Exemplar - Low_Surrogate.
 3. **Patch Search**: Exact nearest-neighbor (`cKDTree`) on deterministic luminance descriptors (normalized pixels, mean, standard deviation, gradient mean absolute errors).
 4. **Confidence Gating**: Residual transfer is gated by an absolute distance threshold, best-to-second-best distance ratio, and variance matching. Flat areas or mismatched descriptors default gracefully to the Lanczos baseline with 0.0 confidence.
-5. **Overlap-Add Reconstruction**: Uses a Hann window to safely accumulate patches across overlapping regions, bounded by 256x256 tiles to guarantee constant low RAM usage. 
+5. **Overlap-Add Reconstruction**: Uses a Hann window to safely accumulate patches across overlapping regions. 
 
-## Experimental Configurations
+## Source-Only Data-Flow Explanation
+The algorithm is purely classical: no AI, no neural networks, no pretrained models, no external image databases, and no APIs are used. The dictionary is populated exclusively by patches extracted from downsampled versions of the single input image. During reconstruction, target patches are queried against this internal dictionary. If a match satisfies strict confidence gates, the corresponding high-frequency residual is scaled and added to the Lanczos baseline. 
 
-- **ISEPR_A (Conservative)**: Small patches (5x5), Top-K=3. Strict maximum distance gating (0.5), strict distance ratio threshold (0.8), low residual gain (0.5) to prevent over-sharpening.
-- **ISEPR_B (Balanced)**: Small patches (5x5), Top-K=5. Balanced distance (1.0), ratio (0.9), and medium residual gain (0.8).
-- **ISEPR_C (Texture-seeking)**: Medium patches (7x7), Top-K=7. Permissive distance (1.5), permissive ratio (0.95), maximum residual gain (1.0).
+## Experimental Configurations & Rejection Reasons
 
-## Results and Limitations
+- **ISEPR_A (Conservative)**: Small patches (5x5), Top-K=3. Strict maximum distance gating (0.5), strict distance ratio threshold (0.8), low residual gain (0.5). Rejected because it failed to meaningfully improve Edge F1 and caused structural degradation.
+- **ISEPR_B (Balanced)**: Small patches (5x5), Top-K=5. Balanced distance (1.0), ratio (0.9), and medium residual gain (0.8). Rejected due to ringing, noise amplification, and failure to beat Lanczos quantitatively.
+- **ISEPR_C (Texture-seeking)**: Medium patches (7x7), Top-K=7. Permissive distance (1.5), permissive ratio (0.95), maximum residual gain (1.0). Rejected due to severe noise, distorted edges, and lowest PSNR/SSIM scores.
 
-The execution successfully transferred true high-frequency source data to the enlarged images. Because the residuals originate solely from the input image, they inherently contain its noise floor and structure limits. 
+## Results and Visual Limitations
 
-The configurations were heavily restricted by the dictionary's actual contents—if a matching sharp edge didn't exist in the input scale-space, the algorithm mathematically could not "invent" one.
-
-*Note: The official benchmark dictates that if structural metrics (PSNR/SSIM) suffer unacceptable mathematical loss, or if Edge F1 fails to definitively improve over Lanczos across scales, no configuration is automatically accepted.*
-
-### Status: `NO_MEASURABLE_GAIN`
-
-While the architectural transfer mechanism functions mathematically, and internal scale-space patches were proven to successfully match and transfer high-frequency energy, the quantitative results did not beat Lanczos cleanly. 
+ISEPR did not recover missing information. While the residuals originate solely from the input image, they can be transferred to an incorrect location and create false local detail. 
 
 **Visual Analysis**:
-- The residuals provided a slight sharpening to distinct edges (like the license plate) when high-confidence matches existed.
-- However, self-example residuals often carry noise, meaning transferred patches amplify local grain structure.
-- When an exact match fails, confidence falls to 0, leaving "patchy" transitions between sharpened regions and Lanczos baseline regions.
+- Visual results show noise, ringing, and distorted edges.
+- Self-example residuals carry the source image's noise, meaning transferred patches amplify local grain structure.
+- When transferred patches don't perfectly align structurally, they generate artificial high-frequency distortions.
+- Increased edge energy merely reflects this amplified noise and distortion, not accurate recovered information.
 
-**Conclusion**:
-Internal patch recurrence is a mathematically true, non-hallucinated method to add high-frequency energy. But without an external dataset of "perfect" pristine edges, the transferred residuals are bound by the captured blur and noise of the source photograph itself. No missing information was proven recovered.
+## Status: `NO_MEASURABLE_GAIN`
+
+Lanczos remains the accepted operational fallback. No ISEPR configuration was selected. The quantitative metrics failed to beat Lanczos, and visual inspection confirms that the internal self-example method degrades image quality.
+
+## Benchmark Execution
+
+- **Benchmark Commit**: {COMMIT}
+- **Commands**: 
+  - `python run_m5c_benchmark.py`
+  - `python validate_m5c.py`
+- **Validation**: All tests passed (16 passed, 0 failed, 0 skipped).
+- **Viewer-build**: Successful (exit code 0).
+- **Peak RAM**: {RAM_MB} MiB ({RAM_BYTES} bytes)
+- **Tile-Equivalence Maximum Error**: {TILE_ERR}
+
+## Metrics (2x / 4x / 8x)
+{METRICS}
+
+## Artifacts
+{ARTIFACTS}

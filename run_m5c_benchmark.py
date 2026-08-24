@@ -25,7 +25,7 @@ from m5c_isepr import create_scale_space, create_low_surrogate, PatchDictionary,
 
 def get_git_dirty():
     try:
-        return bool(subprocess.check_output(["git", "status", "--porcelain", "--untracked-files=no"]).strip())
+        return bool(subprocess.check_output(["git", "status", "--porcelain"]).strip())
     except Exception:
         return True
 

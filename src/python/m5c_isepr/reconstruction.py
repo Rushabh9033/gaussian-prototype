@@ -51,8 +51,8 @@ def process_tile(target_tile_rgb, dictionary, config, tile_x, tile_y, scale_fact
     target_luma = cv2.cvtColor(target_tile_rgb, cv2.COLOR_RGB2GRAY) if target_tile_rgb.shape[-1] == 3 else target_tile_rgb
     
     # Extract overlapping patches from target
-    target_patches, coords = extract_patches(target_tile_rgb, patch_size, stride=2)
-    target_patches_luma, _ = extract_patches(target_luma, patch_size, stride=2)
+    target_patches, coords = extract_patches(target_tile_rgb, patch_size, stride=1, global_offset_x=tile_x, global_offset_y=tile_y)
+    target_patches_luma, _ = extract_patches(target_luma, patch_size, stride=1, global_offset_x=tile_x, global_offset_y=tile_y)
     
     # Filter patches to ONLY those whose top-left coordinate is within the core tile.
     # This prevents duplicate processing of overlap regions across tiles.
@@ -154,7 +154,7 @@ def process_tile(target_tile_rgb, dictionary, config, tile_x, tile_y, scale_fact
             
     return output_accum, weight_accum, confidence_map, total_active, accepted_count, prov_records
 
-def reconstruct_overlap_add(target_baseline, dictionary, config, scale_factor, tile_size=256):
+def reconstruct_overlap_add(target_baseline, dictionary, config, scale_factor, tile_size=256, tile_order="normal"):
     """
     Tiled overlap-add reconstruction.
     target_baseline is the direct Lanczos scaled linear image.
@@ -171,25 +171,32 @@ def reconstruct_overlap_add(target_baseline, dictionary, config, scale_factor, t
     total_act = 0
     total_acc = 0
     
-    # Process in tiles, with padding to handle overlap
+    tiles = []
     for ty in range(0, h, tile_size):
         for tx in range(0, w, tile_size):
-            y1 = max(0, ty - pad)
-            y2 = min(h, ty + tile_size + pad)
-            x1 = max(0, tx - pad)
-            x2 = min(w, tx + tile_size + pad)
+            tiles.append((tx, ty))
             
-            tile = target_baseline[y1:y2, x1:x2].copy()
-            t_res, t_w, t_conf, t_act, t_acc, t_prov = process_tile(tile, dictionary, config, x1, y1, scale_factor, tx, ty, tile_size)
-            
-            # Add to global accumulators
-            accum_res[y1:y2, x1:x2] += t_res
-            accum_weight[y1:y2, x1:x2] += t_w
-            conf_map[y1:y2, x1:x2] = np.maximum(conf_map[y1:y2, x1:x2], t_conf)
-            
-            total_act += t_act
-            total_acc += t_acc
-            all_prov.extend(t_prov)
+    if tile_order == "reverse":
+        tiles.reverse()
+    
+    # Process in tiles, with padding to handle overlap
+    for tx, ty in tiles:
+        y1 = max(0, ty - pad)
+        y2 = min(h, ty + tile_size + pad)
+        x1 = max(0, tx - pad)
+        x2 = min(w, tx + tile_size + pad)
+        
+        tile = target_baseline[y1:y2, x1:x2].copy()
+        t_res, t_w, t_conf, t_act, t_acc, t_prov = process_tile(tile, dictionary, config, x1, y1, scale_factor, tx, ty, tile_size)
+        
+        # Add to global accumulators
+        accum_res[y1:y2, x1:x2] += t_res
+        accum_weight[y1:y2, x1:x2] += t_w
+        conf_map[y1:y2, x1:x2] = np.maximum(conf_map[y1:y2, x1:x2], t_conf)
+        
+        total_act += t_act
+        total_acc += t_acc
+        all_prov.extend(t_prov)
             
     # Normalize
     safe_weight = np.maximum(accum_weight, 1e-6)
