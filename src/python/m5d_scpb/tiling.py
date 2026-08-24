@@ -2,91 +2,92 @@ import numpy as np
 import cv2
 from .backprojection import run_scpb_optimization
 
-def process_tile(source_tile, candidate_tile, scale_factor, base_sigma, config, max_iters, initial_step, global_offset_x, global_offset_y):
-    """
-    Process a single tile. SCPB operates entirely locally within the padded tile, but we need to ensure the grid aligns if there were sub-pixel shifts. 
-    However, SCPB uses standard convolutions and pixel-wise additions which are translation-invariant.
-    As long as the forward model and backprojection use same padding and don't introduce boundary artifacts inside the valid region, 
-    we just need sufficient tile padding.
-    """
-    # For SCPB, the operations are INTER_AREA, Gaussian Blur, INTER_NEAREST.
-    # Blur has a kernel size, INTER_AREA has a window size.
-    # They are completely translation invariant as long as padding is sufficient.
+def compute_halo_size(scale_factor, base_sigma, config, max_iters):
+    # Calculate exact dependency radius for PDE mathematically
+    hr_sigma = base_sigma * scale_factor * config.get('psf_multiplier', 1.0)
+    blur_ksize = int(np.ceil(3 * hr_sigma)) * 2 + 1
+    blur_radius = blur_ksize // 2
     
-    out, history = run_scpb_optimization(source_tile, candidate_tile, scale_factor, base_sigma, config, max_iters, initial_step)
+    # Forward pass: blur (blur_radius) + downsample (scale_factor)
+    # Backward pass: upsample (4 * scale_factor) + blur (blur_radius)
+    # Regularization: finite difference (1)
+    radius_per_iter = blur_radius * 2 + 5 * scale_factor + 1
     
-    return out
+    halo = max_iters * radius_per_iter + 4 * scale_factor + 4
+    return int(halo)
 
-def reconstruct_tiled(source_full, scale_factor, base_sigma, config, max_iters, initial_step, target_shape=None, tile_size=64, padding=512):
+def reconstruct_tiled(source_full, scale_factor, base_sigma, config, max_iters, initial_step, target_shape=None, tile_size=64):
     """
-    Run SCPB using overlapping tiles.
+    Run SCPB using overlapping tiles mathematically equivalent to full-image processing.
     """
-    sh, sw = source_full.shape[:2]
     if target_shape is not None:
-        th, tw = target_shape[:2]
+        th, tw = target_shape
     else:
+        sh, sw = source_full.shape[:2]
         th, tw = sh * scale_factor, sw * scale_factor
         
+    halo = compute_halo_size(scale_factor, base_sigma, config, max_iters)
+    
     candidate_full = cv2.resize(source_full, (tw, th), interpolation=cv2.INTER_LANCZOS4)
     
-    req_ch = max(th, sh * scale_factor)
-    if req_ch % scale_factor != 0:
-        req_ch += scale_factor - (req_ch % scale_factor)
-    req_cw = max(tw, sw * scale_factor)
-    if req_cw % scale_factor != 0:
-        req_cw += scale_factor - (req_cw % scale_factor)
-        
+    req_ch = max(th, source_full.shape[0] * scale_factor)
+    req_cw = max(tw, source_full.shape[1] * scale_factor)
+    
+    if req_ch % scale_factor != 0: req_ch += scale_factor - (req_ch % scale_factor)
+    if req_cw % scale_factor != 0: req_cw += scale_factor - (req_cw % scale_factor)
+    
+    pad_ch = req_ch - th
+    pad_cw = req_cw - tw
+    candidate_padded = cv2.copyMakeBorder(candidate_full, 0, pad_ch, 0, pad_cw, cv2.BORDER_REPLICATE)
+    
     req_sh = req_ch // scale_factor
     req_sw = req_cw // scale_factor
     
-    pad_sh = req_sh - sh
-    pad_sw = req_sw - sw
-    if pad_sh > 0 or pad_sw > 0:
-        source_padded = cv2.copyMakeBorder(source_full, 0, pad_sh, 0, pad_sw, cv2.BORDER_REPLICATE)
-    else:
-        source_padded = source_full
-        
-    pad_ch = req_ch - th
-    pad_cw = req_cw - tw
-    if pad_ch > 0 or pad_cw > 0:
-        candidate_padded = cv2.copyMakeBorder(candidate_full, 0, pad_ch, 0, pad_cw, cv2.BORDER_REPLICATE)
-    else:
-        candidate_padded = candidate_full
-        
+    pad_sh = req_sh - source_full.shape[0]
+    pad_sw = req_sw - source_full.shape[1]
+    source_padded = cv2.copyMakeBorder(source_full, 0, pad_sh, 0, pad_sw, cv2.BORDER_REPLICATE)
+    
     out_padded = np.zeros_like(candidate_padded)
+    
+    tile_count = 0
+    peak_memory = 0
     
     for y in range(0, req_ch, tile_size):
         for x in range(0, req_cw, tile_size):
-            y0 = max(0, y - padding)
-            y1 = min(req_ch, y + tile_size + padding)
-            x0 = max(0, x - padding)
-            x1 = min(req_cw, x + tile_size + padding)
+            # Compute padded tile coordinates in HR space
+            y0 = max(0, y - halo)
+            y1 = min(req_ch, y + tile_size + halo)
+            x0 = max(0, x - halo)
+            x1 = min(req_cw, x + tile_size + halo)
             
-            sy0 = y0 // scale_factor
-            sy1 = y1 // scale_factor
-            sx0 = x0 // scale_factor
-            sx1 = x1 // scale_factor
+            sy0, sy1 = y0 // scale_factor, y1 // scale_factor
+            sx0, sx1 = x0 // scale_factor, x1 // scale_factor
             
-            ty0 = sy0 * scale_factor
-            ty1 = sy1 * scale_factor
-            tx0 = sx0 * scale_factor
-            tx1 = sx1 * scale_factor
+            # Ensure integer alignment
+            y0, y1 = sy0 * scale_factor, sy1 * scale_factor
+            x0, x1 = sx0 * scale_factor, sx1 * scale_factor
             
-            src_tile = source_padded[sy0:sy1, sx0:sx1].copy()
-            cand_tile = candidate_padded[ty0:ty1, tx0:tx1].copy()
+            src_tile = source_padded[sy0:sy1, sx0:sx1]
+            cand_tile = candidate_padded[y0:y1, x0:x1].copy()
             
-            out_tile = process_tile(src_tile, cand_tile, scale_factor, base_sigma, config, max_iters, initial_step, tx0, ty0)
+            out_tile, _ = run_scpb_optimization(
+                src_tile, cand_tile, scale_factor, base_sigma, config, max_iters, initial_step
+            )
             
-            valid_y0 = y - ty0
-            valid_y1 = min(y + tile_size, req_ch) - ty0
-            valid_x0 = x - tx0
-            valid_x1 = min(x + tile_size, req_cw) - tx0
+            tile_mem = out_tile.nbytes * 5  # rough approximation
+            if tile_mem > peak_memory: peak_memory = tile_mem
             
-            wy0 = ty0 + valid_y0
-            wy1 = ty0 + valid_y1
-            wx0 = tx0 + valid_x0
-            wx1 = tx0 + valid_x1
+            valid_y0 = y - y0
+            valid_y1 = valid_y0 + min(tile_size, req_ch - y)
+            valid_x0 = x - x0
+            valid_x1 = valid_x0 + min(tile_size, req_cw - x)
+            
+            wy0 = y
+            wy1 = y + min(tile_size, req_ch - y)
+            wx0 = x
+            wx1 = x + min(tile_size, req_cw - x)
             
             out_padded[wy0:wy1, wx0:wx1] = out_tile[valid_y0:valid_y1, valid_x0:valid_x1]
+            tile_count += 1
             
-    return out_padded[:th, :tw]
+    return out_padded[:th, :tw], tile_count, halo, peak_memory

@@ -1,179 +1,159 @@
 import numpy as np
 import cv2
 from scipy.optimize import curve_fit
-from scipy.interpolate import interp1d
+from scipy.special import erf
 
 def extract_luminance(img_lin):
     if img_lin.ndim == 3 and img_lin.shape[2] == 3:
-        # Standard luminance weights
         return np.dot(img_lin, [0.2126, 0.7152, 0.0722]).astype(np.float32)
     elif img_lin.ndim == 3 and img_lin.shape[2] == 1:
         return img_lin[:, :, 0].astype(np.float32)
     return img_lin.astype(np.float32)
 
-def detect_edges(luma, low_thresh=0.05, high_thresh=0.15):
-    """
-    Detects candidate edge pixels using gradient magnitude.
-    Returns: gradient magnitude, gradient x, gradient y, candidate mask
-    """
+def gaussian_step(x, amplitude, center, sigma, offset):
+    return amplitude * (0.5 * (1 + erf((x - center) / (sigma * np.sqrt(2))))) + offset
+
+def estimate_psf(img_lin, min_sigma=0.35, max_sigma=2.0, patch_size=9):
+    luma = extract_luminance(img_lin)
+    h, w = luma.shape
+    
     gx = cv2.Sobel(luma, cv2.CV_32F, 1, 0, ksize=3)
     gy = cv2.Sobel(luma, cv2.CV_32F, 0, 1, ksize=3)
     mag = np.sqrt(gx**2 + gy**2)
     
-    # NMS (simplified) or simple thresholding
-    candidates = mag > high_thresh
-    return mag, gx, gy, candidates
-
-def sample_edge_profile(luma, x, y, gx, gy, length=7, num_samples=15):
-    """
-    Sample an edge profile perpendicular to the edge direction.
-    """
-    # Normal vector
-    mag = np.sqrt(gx**2 + gy**2) + 1e-6
-    nx = gx / mag
-    ny = gy / mag
+    # 1. Non-maximum suppression and thresholding
+    mag_pad = cv2.copyMakeBorder(mag, 1, 1, 1, 1, cv2.BORDER_REPLICATE)
+    is_max_x = (mag >= mag_pad[1:-1, 0:-2]) & (mag >= mag_pad[1:-1, 2:])
+    is_max_y = (mag >= mag_pad[0:-2, 1:-1]) & (mag >= mag_pad[2:, 1:-1])
+    is_max = is_max_x | is_max_y
+    candidates = (mag > 0.1) & is_max
     
-    # Sample points
-    t = np.linspace(-length/2, length/2, num_samples)
-    px = x + nx * t
-    py = y + ny * t
+    # 2. Border rejection
+    border = patch_size // 2 + 2
+    candidates[:border, :] = False
+    candidates[-border:, :] = False
+    candidates[:, :border] = False
+    candidates[:, -border:] = False
     
-    # Check boundaries
-    h, w = luma.shape
-    if np.any(px < 0) or np.any(px > w-1) or np.any(py < 0) or np.any(py > h-1):
-        return None, None
-        
-    # Interpolate
-    map_x = px.astype(np.float32)
-    map_y = py.astype(np.float32)
-    
-    profile = cv2.remap(luma, map_x, map_y, cv2.INTER_LINEAR, borderMode=cv2.BORDER_REFLECT).flatten()
-    return t, profile
-
-def error_function(x):
-    from scipy.special import erf
-    return erf(x)
-
-def gaussian_step(x, amplitude, center, sigma, offset):
-    # Integral of Gaussian is Error Function
-    # Step edge modeled as erf
-    from scipy.special import erf
-    return amplitude * (0.5 * (1 + erf((x - center) / (sigma * np.sqrt(2))))) + offset
-
-def fit_edge_profile(t, profile):
-    """
-    Fit the sampled edge profile to a Gaussian step function.
-    """
-    # Normalize profile to [0, 1] approximately for robust fitting
-    p_min, p_max = np.min(profile), np.max(profile)
-    amp_guess = p_max - p_min
-    if amp_guess < 0.05:
-        return None
-        
-    offset_guess = p_min
-    center_guess = 0.0 # because we centered at the gradient peak
-    sigma_guess = 1.0
-    
-    p0 = [amp_guess, center_guess, sigma_guess, offset_guess]
-    bounds = (
-        [0.01, -2.0, 0.35, -0.5],
-        [2.0, 2.0, 3.0, 1.5]
-    )
-    
-    try:
-        popt, pcov = curve_fit(gaussian_step, t, profile, p0=p0, bounds=bounds, maxfev=100)
-        amplitude, center, sigma, offset = popt
-        
-        # Calculate fit residual
-        fit = gaussian_step(t, amplitude, center, sigma, offset)
-        rmse = np.sqrt(np.mean((profile - fit)**2))
-        
-        return {
-            'sigma': sigma,
-            'rmse': rmse,
-            'amplitude': amplitude,
-            'center': center,
-            'offset': offset,
-            't': t,
-            'profile': profile,
-            'fit': fit
-        }
-    except Exception:
-        return None
-
-def estimate_psf(img_lin, min_sigma=0.35, max_sigma=1.5):
-    """
-    Full pipeline to estimate a Gaussian PSF sigma from an image.
-    """
-    luma = extract_luminance(img_lin)
-    mag, gx, gy, candidates = detect_edges(luma)
-    
-    # Find local maxima to thin edges
-    # For simplicity, we just take top N pixels in terms of magnitude
     y_idx, x_idx = np.where(candidates)
-    
-    if len(y_idx) == 0:
-        return {'confidence': 0.0, 'sigma': 1.0, 'reason': 'No edges found'}
-        
-    # Sort by magnitude descending
     mags = mag[y_idx, x_idx]
     order = np.argsort(mags)[::-1]
     
-    # Take top candidates, ensuring spatial isolation (simplified)
-    # Just sample a subset to avoid excessive computation
-    num_to_test = min(1000, len(order))
+    accepted_edges = []
+    rejected_edges = []
     
-    accepted = []
+    # Grid for spatial isolation
+    grid_size = 15
+    grid_w = (w + grid_size - 1) // grid_size
+    grid_h = (h + grid_size - 1) // grid_size
+    occupied = np.zeros((grid_h, grid_w), dtype=bool)
     
-    for i in range(num_to_test):
-        idx = order[i]
+    for idx in order:
         x, y = x_idx[idx], y_idx[idx]
         
-        # Avoid saturated edges
-        if luma[y, x] > 0.95 or luma[y, x] < 0.02:
+        # Spatial isolation
+        gx_idx, gy_idx = x // grid_size, y // grid_size
+        if occupied[gy_idx, gx_idx]:
+            rejected_edges.append({'x': int(x), 'y': int(y), 'reason': 'not_isolated'})
             continue
             
-        t, profile = sample_edge_profile(luma, x, y, gx[y, x], gy[y, x])
-        if profile is None:
+        # Extract patch
+        patch = luma[y-border:y+border+1, x-border:x+border+1]
+        
+        # Saturation rejection
+        if np.any(patch >= 1.0) or np.any(patch <= 0.0):
+            rejected_edges.append({'x': int(x), 'y': int(y), 'reason': 'saturated'})
             continue
             
-        fit_res = fit_edge_profile(t, profile)
-        if fit_res is None:
+        # Straight-edge / curve / texture rejection
+        patch_gx = gx[y-border:y+border+1, x-border:x+border+1]
+        patch_gy = gy[y-border:y+border+1, x-border:x+border+1]
+        patch_mag = mag[y-border:y+border+1, x-border:x+border+1]
+        
+        # Orientation consistency
+        angles = np.arctan2(patch_gy, patch_gx)
+        center_angle = angles[border, border]
+        angle_diff = np.abs(np.arctan2(np.sin(angles - center_angle), np.cos(angles - center_angle)))
+        
+        strong_pixels = patch_mag > 0.05
+        if np.sum(strong_pixels) < 5:
+            rejected_edges.append({'x': int(x), 'y': int(y), 'reason': 'texture'})
             continue
             
-        if fit_res['rmse'] < 0.03 and min_sigma <= fit_res['sigma'] <= max_sigma:
-            accepted.append(fit_res)
+        if np.median(angle_diff[strong_pixels]) > 0.3:
+            rejected_edges.append({'x': int(x), 'y': int(y), 'reason': 'curved'})
+            continue
             
-    if len(accepted) < 10:
+        # Subpixel edge profile sampling
+        nx = patch_gx[border, border] / patch_mag[border, border]
+        ny = patch_gy[border, border] / patch_mag[border, border]
+        
+        length = 7.0
+        num_samples = 15
+        t = np.linspace(-length/2, length/2, num_samples)
+        px = x + nx * t
+        py = y + ny * t
+        
+        map_x = px.astype(np.float32)
+        map_y = py.astype(np.float32)
+        profile = cv2.remap(luma, map_x, map_y, cv2.INTER_LINEAR, borderMode=cv2.BORDER_REFLECT).flatten()
+        
+        # Fit Gaussian step
+        p_min, p_max = np.min(profile), np.max(profile)
+        amp_guess = p_max - p_min
+        if amp_guess < 0.1:
+            rejected_edges.append({'x': int(x), 'y': int(y), 'reason': 'weak_amplitude'})
+            continue
+            
+        p0 = [amp_guess, 0.0, 1.0, p_min]
+        bounds = ([0.05, -2.0, min_sigma, -0.5], [2.0, 2.0, max_sigma, 1.5])
+        
+        try:
+            popt, pcov = curve_fit(gaussian_step, t, profile, p0=p0, bounds=bounds, maxfev=100)
+            amplitude, center, sigma, offset = popt
+            fit = gaussian_step(t, amplitude, center, sigma, offset)
+            rmse = np.sqrt(np.mean((profile - fit)**2))
+            
+            if rmse > 0.03:
+                rejected_edges.append({'x': int(x), 'y': int(y), 'reason': 'poor_fit'})
+                continue
+                
+            accepted_edges.append({
+                'x': int(x), 'y': int(y),
+                'sigma': float(sigma), 'rmse': float(rmse),
+                'amplitude': float(amplitude), 'center': float(center), 'offset': float(offset),
+                't': t.tolist(), 'profile': profile.tolist(), 'fit': fit.tolist(),
+                'reason': 'accepted'
+            })
+            occupied[gy_idx, gx_idx] = True
+            
+        except Exception:
+            rejected_edges.append({'x': int(x), 'y': int(y), 'reason': 'fit_failed'})
+            
+    if len(accepted_edges) < 5:
         return {
-            'confidence': 0.0, 
-            'sigma': 1.0, 
+            'confidence': 0.0,
+            'sigma': 1.0,
             'reason': 'Insufficient accepted edges',
-            'accepted_count': len(accepted)
+            'accepted_count': len(accepted_edges),
+            'accepted_edges': accepted_edges,
+            'rejected_edges': rejected_edges
         }
         
-    sigmas = [r['sigma'] for r in accepted]
-    median_sigma = np.median(sigmas)
-    mad = np.median(np.abs(sigmas - median_sigma))
+    sigmas = np.array([e['sigma'] for e in accepted_edges])
+    median_sigma = float(np.median(sigmas))
+    mad = float(np.median(np.abs(sigmas - median_sigma)))
     
-    confidence = min(1.0, len(accepted) / 50.0)
-    if mad > 0.2:
-        confidence *= 0.5 # lower confidence if estimates disagree heavily
-        
-    # Create normalized kernel
-    k_size = int(np.ceil(median_sigma * 3) * 2 + 1)
-    if k_size < 3: k_size = 3
-    
-    kernel = cv2.getGaussianKernel(k_size, median_sigma)
-    kernel_2d = np.outer(kernel, kernel)
+    # Confidence heuristics
+    confidence = min(1.0, len(accepted_edges) / 15.0)
+    if mad > 0.15: confidence *= np.exp(-(mad - 0.15) * 5)
     
     return {
         'sigma': median_sigma,
         'mad': mad,
-        'confidence': confidence,
-        'kernel': kernel_2d,
-        'accepted_count': len(accepted),
-        'accepted_edges': accepted,
-        'candidate_mask': candidates,
-        'reason': 'Success'
+        'confidence': float(confidence),
+        'reason': 'Success',
+        'accepted_count': len(accepted_edges),
+        'accepted_edges': accepted_edges,
+        'rejected_edges': rejected_edges
     }
