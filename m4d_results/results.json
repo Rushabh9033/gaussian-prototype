@@ -1,0 +1,154 @@
+{
+  "status": "CLASSICAL_LIMIT_CONFIRMED",
+  "ssim_psnr_wins_vs_lanczos": 0,
+  "edge_f1_wins_vs_lanczos": 3,
+  "benchmark": [
+    {
+      "scale": "2x",
+      "metrics": {
+        "Nearest": {
+          "psnr": 25.634798695354995,
+          "ssim": 0.8449577290319779,
+          "edge_f1": 0.8310490899671288,
+          "edge_precision": 0.9774325908556597,
+          "edge_recall": 0.7228001733852706,
+          "gradient_energy_error": 0.316904288757957,
+          "laplacian_variance_error": 0.3318892850508421,
+          "ringing_percent": 5.17550505050505,
+          "runtime_ms": 0.0
+        },
+        "Bicubic": {
+          "psnr": 26.80387732558415,
+          "ssim": 0.8595758634275098,
+          "edge_f1": 0.8518731983567314,
+          "edge_precision": 0.9886287625416738,
+          "edge_recall": 0.748354430379671,
+          "gradient_energy_error": 0.39787947223918285,
+          "laplacian_variance_error": 0.8573760283576574,
+          "ringing_percent": 5.4103535353535355,
+          "runtime_ms": 1.0035037994384766
+        },
+        "Lanczos": {
+          "psnr": 26.887205071413852,
+          "ssim": 0.8620165101775455,
+          "edge_f1": 0.8685798044345235,
+          "edge_precision": 0.9857947274122106,
+          "edge_recall": 0.7762773354831425,
+          "gradient_energy_error": 0.3678039585449303,
+          "laplacian_variance_error": 0.8504526072405449,
+          "ringing_percent": 5.44570707070707,
+          "runtime_ms": 1.9969940185546875
+        },
+        "Hybrid": {
+          "psnr": 25.161806336162638,
+          "ssim": 0.8386314857581677,
+          "edge_f1": 0.9085348087046925,
+          "edge_precision": 0.9110115860187994,
+          "edge_recall": 0.9060714631547491,
+          "gradient_energy_error": 0.13245069198859885,
+          "laplacian_variance_error": 0.45662453406637027,
+          "ringing_percent": 9.57449494949495,
+          "runtime_ms": 16.52359962463379
+        }
+      }
+    },
+    {
+      "scale": "4x",
+      "metrics": {
+        "Nearest": {
+          "psnr": 21.712096361100073,
+          "ssim": 0.6246854222020853,
+          "edge_f1": 0.6267085999767763,
+          "edge_precision": 0.7693792693791551,
+          "edge_recall": 0.5286734693877011,
+          "gradient_energy_error": 0.5265351678436727,
+          "laplacian_variance_error": 0.6162472356492671,
+          "ringing_percent": 9.45959595959596,
+          "runtime_ms": 0.0
+        },
+        "Bicubic": {
+          "psnr": 22.82354693142238,
+          "ssim": 0.6526202114714784,
+          "edge_f1": 0.43931256677924563,
+          "edge_precision": 0.9604159677957195,
+          "edge_recall": 0.28479060976820003,
+          "gradient_energy_error": 0.7430001905825695,
+          "laplacian_variance_error": 0.9866943925948359,
+          "ringing_percent": 8.65530303030303,
+          "runtime_ms": 0.9992122650146484
+        },
+        "Lanczos": {
+          "psnr": 22.85361913762927,
+          "ssim": 0.6542416414459732,
+          "edge_f1": 0.464990618764626,
+          "edge_precision": 0.940212443095314,
+          "edge_recall": 0.30887337986038793,
+          "gradient_energy_error": 0.7347825052555903,
+          "laplacian_variance_error": 0.9871267784996425,
+          "ringing_percent": 8.526515151515152,
+          "runtime_ms": 1.0018348693847656
+        },
+        "Hybrid": {
+          "psnr": 22.35575771183468,
+          "ssim": 0.6341055212305778,
+          "edge_f1": 0.5806662735123309,
+          "edge_precision": 0.8160412067695334,
+          "edge_recall": 0.4506756070303311,
+          "gradient_energy_error": 0.5696325418026715,
+          "laplacian_variance_error": 0.9460706214376375,
+          "ringing_percent": 12.474747474747474,
+          "runtime_ms": 18.05424690246582
+        }
+      }
+    },
+    {
+      "scale": "8x",
+      "metrics": {
+        "Nearest": {
+          "psnr": 19.14431112767689,
+          "ssim": 0.41445878672753605,
+          "edge_f1": 0.3470822276789871,
+          "edge_precision": 0.536490364903539,
+          "edge_recall": 0.25651832973924166,
+          "gradient_energy_error": 0.6162176224754866,
+          "laplacian_variance_error": 0.7106011772786675,
+          "ringing_percent": 20.94318181818182,
+          "runtime_ms": 0.0
+        },
+        "Bicubic": {
+          "psnr": 20.348943311523033,
+          "ssim": 0.46638786359619805,
+          "edge_f1": 0.04757373924746603,
+          "edge_precision": 0.9578544061265983,
+          "edge_recall": 0.02439262367059963,
+          "gradient_energy_error": 0.8899957939740345,
+          "laplacian_variance_error": 0.997721373475803,
+          "ringing_percent": 21.255050505050505,
+          "runtime_ms": 0.0
+        },
+        "Lanczos": {
+          "psnr": 20.389179562265383,
+          "ssim": 0.4687545127382338,
+          "edge_f1": 0.0357381748325823,
+          "edge_precision": 0.9739583333282607,
+          "edge_recall": 0.018203056556018865,
+          "gradient_energy_error": 0.8872335339451799,
+          "laplacian_variance_error": 0.9977070834826246,
+          "ringing_percent": 20.863636363636363,
+          "runtime_ms": 1.9979476928710938
+        },
+        "Hybrid": {
+          "psnr": 19.998965092946758,
+          "ssim": 0.44866045337144017,
+          "edge_f1": 0.1321500744973524,
+          "edge_precision": 0.6271893244365078,
+          "edge_recall": 0.07385582400313555,
+          "gradient_energy_error": 0.8425930912129501,
+          "laplacian_variance_error": 0.9926190663278235,
+          "ringing_percent": 23.555555555555554,
+          "runtime_ms": 15.110969543457031
+        }
+      }
+    }
+  ]
+}
