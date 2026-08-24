@@ -1,0 +1,642 @@
+{
+  "status": "CONTROLLED_GAIN_CONFIRMED",
+  "rejection_reasons": [],
+  "experiments": {
+    "2x": {
+      "metrics": {
+        "Lanczos": {
+          "psnr": 24.23976211079751,
+          "ssim": 0.7560244397599178,
+          "edge_precision": 0.9889152810768013,
+          "edge_recall": 0.5227692008932906,
+          "edge_f1": 0.6839713675778957,
+          "gradient_energy": 8422.6455078125,
+          "laplacian_variance": 73.95408830667789,
+          "color_histogram_distance": 0.2307622464863726,
+          "ringing_percent": 10.390636220020106,
+          "clipping_percent": 0.4823232323232323,
+          "region_wheel": {
+            "psnr": 23.134595956821038,
+            "ssim": 0.7938334327587694,
+            "edge_precision": 0.9889380530973452,
+            "edge_recall": 0.6391478029294274,
+            "edge_f1": 0.776467139654433,
+            "gradient_energy": 802.6538696289062,
+            "laplacian_variance": 81.37212460937499,
+            "color_histogram_distance": 0.34266931957579005,
+            "ringing_percent": 9.731232622798888,
+            "clipping_percent": 2.2333333333333334
+          },
+          "region_headlamp": {
+            "psnr": 22.871511567975332,
+            "ssim": 0.7570518090826167,
+            "edge_precision": 1.0,
+            "edge_recall": 0.6353646353646354,
+            "edge_f1": 0.7770311545510079,
+            "gradient_energy": 968.592529296875,
+            "laplacian_variance": 108.78515555555556,
+            "color_histogram_distance": 0.470208470438456,
+            "ringing_percent": 21.932515337423315,
+            "clipping_percent": 0.6555555555555556
+          },
+          "region_plate": {
+            "psnr": 22.133504464311223,
+            "ssim": 0.7509221628774778,
+            "edge_precision": 0.9854368932038835,
+            "edge_recall": 0.8303341902313625,
+            "edge_f1": 0.9012611250472491,
+            "gradient_energy": 839.2012939453125,
+            "laplacian_variance": 139.74324476,
+            "color_histogram_distance": 0.3976292738516418,
+            "ringing_percent": 16.741573033707866,
+            "clipping_percent": 0.84
+          }
+        },
+        "ShiftAndAdd": {
+          "psnr": 24.045339979574443,
+          "ssim": 0.7479892931328503,
+          "edge_precision": 0.9979286536248562,
+          "edge_recall": 0.4499465967569667,
+          "edge_f1": 0.62023934919304,
+          "gradient_energy": 7388.6884765625,
+          "laplacian_variance": 60.363180000605816,
+          "color_histogram_distance": 0.24514988689224176,
+          "ringing_percent": 9.966968260807123,
+          "clipping_percent": 0.210016835016835,
+          "region_wheel": {
+            "psnr": 23.149259743595092,
+            "ssim": 0.7913122199338055,
+            "edge_precision": 0.991044776119403,
+            "edge_recall": 0.474034620505992,
+            "edge_f1": 0.6413161435950862,
+            "gradient_energy": 666.5911865234375,
+            "laplacian_variance": 49.133630859375,
+            "color_histogram_distance": 0.3570293132413413,
+            "ringing_percent": 9.128822984244671,
+            "clipping_percent": 1.0791666666666666
+          },
+          "region_headlamp": {
+            "psnr": 22.625141507727697,
+            "ssim": 0.7498323417474979,
+            "edge_precision": 1.0,
+            "edge_recall": 0.5404595404595405,
+            "edge_f1": 0.701686121919585,
+            "gradient_energy": 858.7986450195312,
+            "laplacian_variance": 89.65454997222223,
+            "color_histogram_distance": 0.49112836846231117,
+            "ringing_percent": 19.938650306748464,
+            "clipping_percent": 0.34444444444444444
+          },
+          "region_plate": {
+            "psnr": 21.85230358346235,
+            "ssim": 0.7414366112761201,
+            "edge_precision": 0.996268656716418,
+            "edge_recall": 0.7313624678663239,
+            "edge_f1": 0.8435058769967076,
+            "gradient_energy": 728.7728271484375,
+            "laplacian_variance": 106.29482236,
+            "color_histogram_distance": 0.40795460430509417,
+            "ringing_percent": 14.9438202247191,
+            "clipping_percent": 0.2
+          }
+        },
+        "RobustFusion": {
+          "psnr": 24.248116646465906,
+          "ssim": 0.7570692710983328,
+          "edge_precision": 0.9946721311475409,
+          "edge_recall": 0.5087872608991164,
+          "edge_f1": 0.6732160665946857,
+          "gradient_energy": 8260.71484375,
+          "laplacian_variance": 67.26991097703679,
+          "color_histogram_distance": 0.23395157653784115,
+          "ringing_percent": 9.830532816314806,
+          "clipping_percent": 0.32954545454545453,
+          "region_wheel": {
+            "psnr": 23.233410750915514,
+            "ssim": 0.801632470630106,
+            "edge_precision": 0.9891891891891892,
+            "edge_recall": 0.5392809587217043,
+            "edge_f1": 0.6980193823637442,
+            "gradient_energy": 759.910888671875,
+            "laplacian_variance": 60.869611937500004,
+            "color_histogram_distance": 0.3441250476227405,
+            "ringing_percent": 8.665430954587581,
+            "clipping_percent": 1.4708333333333334
+          },
+          "region_headlamp": {
+            "psnr": 22.893695088199415,
+            "ssim": 0.7595325250082219,
+            "edge_precision": 1.0,
+            "edge_recall": 0.6193806193806194,
+            "edge_f1": 0.7649599012954966,
+            "gradient_energy": 952.2994995117188,
+            "laplacian_variance": 96.56383455555556,
+            "color_histogram_distance": 0.47379511900240734,
+            "ringing_percent": 20.398773006134967,
+            "clipping_percent": 0.4277777777777778
+          },
+          "region_plate": {
+            "psnr": 22.10099195224376,
+            "ssim": 0.7518709396660342,
+            "edge_precision": 0.9951060358890701,
+            "edge_recall": 0.8251928020565553,
+            "edge_f1": 0.9022192631023607,
+            "gradient_energy": 823.5413818359375,
+            "laplacian_variance": 121.78402076,
+            "color_histogram_distance": 0.39922290334816685,
+            "ringing_percent": 15.168539325842698,
+            "clipping_percent": 0.5666666666666667
+          }
+        },
+        "MultiframeSR": {
+          "psnr": 25.088003938499224,
+          "ssim": 0.797817711101542,
+          "edge_precision": 0.9951787198669991,
+          "edge_recall": 0.6225847169628119,
+          "edge_f1": 0.7659748607620304,
+          "gradient_energy": 11095.23046875,
+          "laplacian_variance": 128.55685883057214,
+          "color_histogram_distance": 0.2011918515367083,
+          "ringing_percent": 10.57733735458854,
+          "clipping_percent": 1.18476430976431,
+          "region_wheel": {
+            "psnr": 23.893078487402107,
+            "ssim": 0.8381329474956973,
+            "edge_precision": 0.9943074003795066,
+            "edge_recall": 0.7616511318242344,
+            "edge_f1": 0.8625663339894787,
+            "gradient_energy": 1024.0205078125,
+            "laplacian_variance": 120.751037109375,
+            "color_histogram_distance": 0.312712311769738,
+            "ringing_percent": 9.823911028730306,
+            "clipping_percent": 3.920833333333333
+          },
+          "region_headlamp": {
+            "psnr": 23.85674503765592,
+            "ssim": 0.8021660755774956,
+            "edge_precision": 1.0,
+            "edge_recall": 0.7392607392607392,
+            "edge_f1": 0.8500861573808156,
+            "gradient_energy": 1270.1708984375,
+            "laplacian_variance": 183.1248326388889,
+            "color_histogram_distance": 0.4206756662153694,
+            "ringing_percent": 21.932515337423315,
+            "clipping_percent": 1.4333333333333333
+          },
+          "region_plate": {
+            "psnr": 22.94992940846017,
+            "ssim": 0.7937209722953099,
+            "edge_precision": 0.9953560371517027,
+            "edge_recall": 0.8560411311053985,
+            "edge_f1": 0.9204569635353416,
+            "gradient_energy": 1144.083984375,
+            "laplacian_variance": 249.811759,
+            "color_histogram_distance": 0.36790733514293444,
+            "ringing_percent": 16.853932584269664,
+            "clipping_percent": 2.9533333333333336
+          },
+          "source_consistency_error": 0.011220482178032398
+        }
+      },
+      "registration": {
+        "estimated_translations": [
+          [
+            0.0,
+            0.0
+          ],
+          [
+            -0.2646922767162323,
+            0.8938426971435547
+          ],
+          [
+            0.48542457818984985,
+            0.22420227527618408
+          ],
+          [
+            -0.6895632743835449,
+            -0.6719785928726196
+          ],
+          [
+            -0.8752670288085938,
+            0.7271978855133057
+          ],
+          [
+            0.2231355607509613,
+            0.4291607737541199
+          ],
+          [
+            -0.9423545598983765,
+            0.92621248960495
+          ],
+          [
+            0.6728634834289551,
+            -0.5720453262329102
+          ]
+        ],
+        "true_translations": [
+          [
+            0.0,
+            0.0
+          ],
+          [
+            -0.250919762305275,
+            0.9014286128198323
+          ],
+          [
+            0.4639878836228102,
+            0.1973169683940732
+          ],
+          [
+            -0.687962719115127,
+            -0.6880109593275947
+          ],
+          [
+            -0.8838327756636011,
+            0.7323522915498704
+          ],
+          [
+            0.2022300234864176,
+            0.416145155592091
+          ],
+          [
+            -0.9588310114083951,
+            0.9398197043239886
+          ],
+          [
+            0.6648852816008435,
+            -0.5753217786434477
+          ]
+        ],
+        "accepted_ids": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "rejected_ids": [],
+        "registration_rmse": 0.019126495817584903
+      },
+      "coverage_percent": 99.26767676767678,
+      "runtime_seconds": 1.9284029006958008,
+      "peak_ram_mb": 65.13955688476562
+    },
+    "4x": {
+      "metrics": {
+        "Lanczos": {
+          "psnr": 21.030769887523526,
+          "ssim": 0.5400682383223452,
+          "edge_precision": 0.823321554770318,
+          "edge_recall": 0.12535197591999223,
+          "edge_f1": 0.21757744971103282,
+          "gradient_energy": 3428.65869140625,
+          "laplacian_variance": 8.362991325980767,
+          "color_histogram_distance": 0.33298486783508763,
+          "ringing_percent": 20.608932931207814,
+          "clipping_percent": 0.27483164983164987,
+          "region_wheel": {
+            "psnr": 20.616712382627036,
+            "ssim": 0.5690924771359915,
+            "edge_precision": 0.07936507936507936,
+            "edge_recall": 0.006657789613848202,
+            "edge_f1": 0.012285012285012284,
+            "gradient_energy": 357.1155090332031,
+            "laplacian_variance": 10.712939359375,
+            "color_histogram_distance": 0.437955766072407,
+            "ringing_percent": 25.162187210379983,
+            "clipping_percent": 1.0333333333333332
+          },
+          "region_headlamp": {
+            "psnr": 19.28910464995493,
+            "ssim": 0.5208555036297139,
+            "edge_precision": 0.9688888888888889,
+            "edge_recall": 0.22577422577422576,
+            "edge_f1": 0.3662122586112061,
+            "gradient_energy": 395.5785217285156,
+            "laplacian_variance": 13.540154416666667,
+            "color_histogram_distance": 0.6037092700893413,
+            "ringing_percent": 39.57055214723926,
+            "clipping_percent": 0.4166666666666667
+          },
+          "region_plate": {
+            "psnr": 18.89916609486221,
+            "ssim": 0.5025923823186208,
+            "edge_precision": 0.8888888888888888,
+            "edge_recall": 0.07197943444730077,
+            "edge_f1": 0.13317479191438764,
+            "gradient_energy": 335.2840270996094,
+            "laplacian_variance": 17.75635836,
+            "color_histogram_distance": 0.5043572205971618,
+            "ringing_percent": 29.55056179775281,
+            "clipping_percent": 0.5133333333333333
+          }
+        },
+        "ShiftAndAdd": {
+          "psnr": 20.802562161848137,
+          "ssim": 0.5326184980498102,
+          "edge_precision": 0.8907563025210085,
+          "edge_recall": 0.07505583066317119,
+          "edge_f1": 0.13844608471370243,
+          "gradient_energy": 2984.697265625,
+          "laplacian_variance": 10.855058491480461,
+          "color_histogram_distance": 0.3537340318384083,
+          "ringing_percent": 19.6107999425535,
+          "clipping_percent": 0.04713804713804714,
+          "region_wheel": {
+            "psnr": 20.393765115869456,
+            "ssim": 0.5577299698724163,
+            "edge_precision": 0.0,
+            "edge_recall": 0.0,
+            "edge_f1": 0.0,
+            "gradient_energy": 294.56121826171875,
+            "laplacian_variance": 10.050834359375,
+            "color_histogram_distance": 0.45790880823838814,
+            "ringing_percent": 21.686746987951807,
+            "clipping_percent": 0.32916666666666666
+          },
+          "region_headlamp": {
+            "psnr": 18.93239174021876,
+            "ssim": 0.5022991776581153,
+            "edge_precision": 0.935,
+            "edge_recall": 0.18081918081918083,
+            "edge_f1": 0.3030346439139252,
+            "gradient_energy": 346.01971435546875,
+            "laplacian_variance": 16.180655555555553,
+            "color_histogram_distance": 0.6297084847223442,
+            "ringing_percent": 36.963190184049076,
+            "clipping_percent": 0.0
+          },
+          "region_plate": {
+            "psnr": 18.670491659834344,
+            "ssim": 0.4816995585845036,
+            "edge_precision": 0.0,
+            "edge_recall": 0.0,
+            "edge_f1": 0.0,
+            "gradient_energy": 288.90380859375,
+            "laplacian_variance": 19.323591,
+            "color_histogram_distance": 0.5264119040695893,
+            "ringing_percent": 33.37078651685393,
+            "clipping_percent": 0.0
+          }
+        },
+        "RobustFusion": {
+          "psnr": 21.045274900837228,
+          "ssim": 0.5427175184799968,
+          "edge_precision": 0.8177737881508079,
+          "edge_recall": 0.10389358190115545,
+          "edge_f1": 0.18436466516347216,
+          "gradient_energy": 3375.707763671875,
+          "laplacian_variance": 8.431360858585858,
+          "color_histogram_distance": 0.3363076822923357,
+          "ringing_percent": 19.165589544736463,
+          "clipping_percent": 0.13468013468013468,
+          "region_wheel": {
+            "psnr": 20.60340666932582,
+            "ssim": 0.5728356256556603,
+            "edge_precision": 0.0,
+            "edge_recall": 0.0,
+            "edge_f1": 0.0,
+            "gradient_energy": 343.689208984375,
+            "laplacian_variance": 8.440081109375003,
+            "color_histogram_distance": 0.43638461889375363,
+            "ringing_percent": 19.833178869323447,
+            "clipping_percent": 0.7374999999999999
+          },
+          "region_headlamp": {
+            "psnr": 19.272051341529874,
+            "ssim": 0.5186377837484692,
+            "edge_precision": 0.9615384615384616,
+            "edge_recall": 0.2127872127872128,
+            "edge_f1": 0.34846055688250493,
+            "gradient_energy": 391.0946044921875,
+            "laplacian_variance": 12.141991000000003,
+            "color_histogram_distance": 0.608737851197505,
+            "ringing_percent": 36.50306748466258,
+            "clipping_percent": 0.32222222222222224
+          },
+          "region_plate": {
+            "psnr": 18.915426979126405,
+            "ssim": 0.5082117386826558,
+            "edge_precision": 0.0,
+            "edge_recall": 0.0,
+            "edge_f1": 0.0,
+            "gradient_energy": 329.69091796875,
+            "laplacian_variance": 16.885639,
+            "color_histogram_distance": 0.5094840646201396,
+            "ringing_percent": 28.98876404494382,
+            "clipping_percent": 0.07333333333333333
+          }
+        },
+        "MultiframeSR": {
+          "psnr": 21.5430351361932,
+          "ssim": 0.5690932574868378,
+          "edge_precision": 0.7822198842714361,
+          "edge_recall": 0.15904456743373144,
+          "edge_f1": 0.2643419134901789,
+          "gradient_energy": 4387.0009765625,
+          "laplacian_variance": 13.842752515049487,
+          "color_histogram_distance": 0.29895838124970914,
+          "ringing_percent": 19.833405141462013,
+          "clipping_percent": 1.0429292929292928,
+          "region_wheel": {
+            "psnr": 20.99562237730019,
+            "ssim": 0.6012189533958069,
+            "edge_precision": 0.3944954128440367,
+            "edge_recall": 0.08788282290279627,
+            "edge_f1": 0.14374351052245044,
+            "gradient_energy": 471.96990966796875,
+            "laplacian_variance": 16.926684937500003,
+            "color_histogram_distance": 0.4183013112976505,
+            "ringing_percent": 23.586654309545878,
+            "clipping_percent": 3.6833333333333336
+          },
+          "region_headlamp": {
+            "psnr": 19.963870994340848,
+            "ssim": 0.5592200646699789,
+            "edge_precision": 0.9385964912280702,
+            "edge_recall": 0.22677322677322678,
+            "edge_f1": 0.36528931834417416,
+            "gradient_energy": 511.3152160644531,
+            "laplacian_variance": 19.38764488888889,
+            "color_histogram_distance": 0.5507940585679241,
+            "ringing_percent": 38.49693251533742,
+            "clipping_percent": 1.3555555555555554
+          },
+          "region_plate": {
+            "psnr": 19.4046990016169,
+            "ssim": 0.5568354516450847,
+            "edge_precision": 0.8251121076233184,
+            "edge_recall": 0.2519280205655527,
+            "edge_f1": 0.38600021406400514,
+            "gradient_energy": 444.826171875,
+            "laplacian_variance": 28.535023359999997,
+            "color_histogram_distance": 0.4616910653846312,
+            "ringing_percent": 27.415730337078653,
+            "clipping_percent": 2.34
+          },
+          "source_consistency_error": 0.014828217215836048
+        }
+      },
+      "registration": {
+        "estimated_translations": [
+          [
+            0.0,
+            0.0
+          ],
+          [
+            -0.2633344531059265,
+            0.891585111618042
+          ],
+          [
+            0.4613264501094818,
+            0.2150905728340149
+          ],
+          [
+            -0.6657181978225708,
+            -0.6656400561332703
+          ],
+          [
+            -0.8708263635635376,
+            0.7264903783798218
+          ],
+          [
+            0.22040480375289917,
+            0.42555320262908936
+          ],
+          [
+            -0.9508672952651978,
+            0.9290116429328918
+          ],
+          [
+            0.6561254262924194,
+            -0.568515956401825
+          ],
+          [
+            -0.6157995462417603,
+            -0.6161260604858398
+          ],
+          [
+            -0.3940594494342804,
+            0.06079461798071861
+          ],
+          [
+            -0.1649095118045807,
+            -0.39679449796676636
+          ],
+          [
+            0.24269826710224152,
+            -0.6965387463569641
+          ],
+          [
+            -0.4323471486568451,
+            -0.26317885518074036
+          ],
+          [
+            -0.09799160808324814,
+            0.5763944983482361
+          ],
+          [
+            -0.5914140343666077,
+            0.04235406219959259
+          ],
+          [
+            0.19564417004585266,
+            -0.8888441920280457
+          ]
+        ],
+        "true_translations": [
+          [
+            0.0,
+            0.0
+          ],
+          [
+            -0.250919762305275,
+            0.9014286128198323
+          ],
+          [
+            0.4639878836228102,
+            0.1973169683940732
+          ],
+          [
+            -0.687962719115127,
+            -0.6880109593275947
+          ],
+          [
+            -0.8838327756636011,
+            0.7323522915498704
+          ],
+          [
+            0.2022300234864176,
+            0.416145155592091
+          ],
+          [
+            -0.9588310114083951,
+            0.9398197043239886
+          ],
+          [
+            0.6648852816008435,
+            -0.5753217786434477
+          ],
+          [
+            -0.6363500655857988,
+            -0.6331909802931324
+          ],
+          [
+            -0.39151551408092455,
+            0.04951286326447568
+          ],
+          [
+            -0.13610996271576847,
+            -0.4175417196039162
+          ],
+          [
+            0.22370578944475894,
+            -0.7210122786959163
+          ],
+          [
+            -0.4157107029295637,
+            -0.2672763134126166
+          ],
+          [
+            -0.08786003156592814,
+            0.5703519227860272
+          ],
+          [
+            -0.6006524356832805,
+            0.02846887682722321
+          ],
+          [
+            0.18482913772408494,
+            -0.9070991745600046
+          ]
+        ],
+        "accepted_ids": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15
+        ],
+        "rejected_ids": [],
+        "registration_rmse": 0.020498206188852248
+      },
+      "coverage_percent": 99.70075757575756,
+      "runtime_seconds": 1.8295552730560303,
+      "peak_ram_mb": 120.95046615600586
+    }
+  }
+}
