@@ -59,10 +59,9 @@ def main():
     
     # Corrected crops for 360x220 image
     crops_def = {
-        "wheel": (30, 140, 90, 200),
-        "headlamp": (280, 110, 330, 150),
-        "plate": (300, 160, 350, 190),
-        "foliage": (150, 10, 230, 60)
+        "wheel": (185, 100, 260, 205),
+        "headlamp": (135, 70, 195, 125),
+        "plate": (25, 125, 100, 165)
     }
     
     # 0. Draw annotated source image

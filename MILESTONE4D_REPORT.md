@@ -18,17 +18,17 @@ This milestone evaluates the maximum faithful zoom quality achievable without AI
 4. **Classical Edge-Aware Hybrid**: 
    - Conversion from sRGB to Linear RGB
    - Lanczos upscale as the base
-   - Luminance extraction and Structure Tensor edge detection using Scharr gradients to determine edge coherence and exact gradient direction.
-   - Direction-aware sharpening (sharpening strictly across edges by evaluating the second derivative in the gradient direction).
-   - Tested 3 conservative strengths (0.5, 1.0, 1.5). Selected `1.5` as the primary configuration based on Edge F1 vs Ringing trade-off.
-   - Local min/max anti-ringing clamping (with uint8 overflow prevention).
+   - Luminance extraction and Structure Tensor edge detection using Scharr gradients to determine exact gradient direction.
+   - Direction-aware sharpening (sharpening across edges by evaluating the second derivative in the gradient direction).
+   - Tested 3 conservative strengths (0.5, 1.0, 1.5). Selected `1.5`.
+   - Local min/max anti-ringing clamping.
    - Conversion back to sRGB.
 
 ## Benchmark Procedure
 1. The original `porche.png` (360x220) was used as ground truth.
 2. The image was downsampled using area averaging to 180x110 (2x), 90x55 (4x), and 45x28 (8x).
 3. The downsampled images were restored back to 360x220 using all four methods.
-4. Various classical metrics were computed against the ground truth. F1 Precision/Recall used a correctly computed directional match.
+4. Classical metrics were computed against the ground truth. F1 Precision/Recall used a correctly computed directional match.
 
 ## Metric Results
 
@@ -56,24 +56,28 @@ This milestone evaluates the maximum faithful zoom quality achievable without AI
 | Lanczos | **20.39** | **0.469** | 0.039 | 16.81% |
 | Hybrid (1.5) | 20.11 | 0.459 | **0.341** | 17.75% |
 
-*(Note: The Hybrid method significantly improved structural boundaries and edge retention across all scales—crushing Lanczos on Edge F1—but the conservative sharpening still lowered the global pixel-wise accuracy (PSNR/SSIM) due to noise introduction).*
+*(Note: The Hybrid method successfully retained more local edge structures than Lanczos across all scales. However, the associated noise penalizes the global pixel-wise accuracy (PSNR/SSIM). Lanczos remains the clear fidelity winner for mathematically smooth structural reproduction without noise.)*
 
 ## Artifacts and Evidence
 - **Results JSON**: `m4d_results/results.json`
 - **Execution Evidence**: `m4d_results/evidence.jsonl`
-- **Annotated Source**: `m4d_results/annotated_source.png` (Shows exact bounding boxes used for crops)
-- **Contact Sheets**: `m4d_results/contact_full_4x.png`, `m4d_results/contact_8x_wheel.png`, etc.
-- **Source Image SHA-256**: `8eda0f62759c5d72da363eb338329a87650cd931076fb1c0f932d71dbefdafc1`
+- **Annotated Source**: `m4d_results/annotated_source.png`
+- **Contact Sheets**: `m4d_results/contact_full_4x.png`, `m4d_results/contact_8x_wheel.png`, `m4d_results/contact_8x_headlamp.png`, `m4d_results/contact_8x_plate.png`.
 
 ## Test and Build Evidence
-- All 28 automated Python tests passed successfully. Tests specifically verified integer overflow prevention, strict artifact completion, missing `.pycache` verification, the corrected edge F1 formulation, directional logic inclusion, and no AI dependencies.
-- The viewer production build completed successfully.
+- All 31 automated Python tests passed successfully. The tests verify:
+  - Integer overflow prevention (anti-ringing threshold wrap).
+  - Explicit precision and recall formulation of edge F1.
+  - Absence of `__pycache__` and `.pyc` files in Git tracking.
+  - Strict artifact completion and hashing (ensuring `evidence.jsonl` covers all existing artifacts).
+  - No AI dependencies imported.
+- The viewer production build (`npm run build`) completed successfully.
 
 ## Technical Limitations
-- The hybrid approach improves edge recall and precision over standard Lanczos but fundamentally fails to beat Lanczos on global pixel-wise accuracy (PSNR/SSIM).
-- **Explicit Statement**: No method (including the Hybrid method) can recover or invent uncaptured real-world information. The output is strictly limited by the Shannon-Nyquist theorem on the original sampled pixels. This non-AI path is unsuitable as the main deep-zoom solution.
+- **Explicit Statement**: No method (including the Hybrid method) can recover or invent uncaptured real-world information. The output is strictly limited by the Shannon-Nyquist theorem on the original sampled pixels. This non-AI path is unsuitable as the main deep-zoom solution. 
+- **Next Product Direction**: The next logical step for the product architecture is hybrid API preprocessing.
 
 ## Final Status
 **CLASSICAL_LIMIT_CONFIRMED**
 
-The non-AI limit has been successfully established and benchmarked. Lanczos interpolation remains superior for smooth photographic fidelity, while edge-aware filtering only trades numerical PSNR for sharper local boundaries without introducing new real details.
+The non-AI limit has been successfully established and benchmarked. Lanczos interpolation remains superior for overall fidelity, proving that classical edge-aware filtering only trades numerical PSNR for sharper local boundaries without introducing missing detail.

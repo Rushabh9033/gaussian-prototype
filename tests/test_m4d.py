@@ -116,8 +116,7 @@ def test_expected_outputs_exist():
     results_dir = os.path.join(os.path.dirname(__file__), "..", "m4d_results")
     evidence_path = os.path.join(results_dir, "evidence.jsonl")
     
-    if not os.path.exists(evidence_path):
-        pytest.skip("No evidence file yet. Run benchmark first.")
+    assert os.path.exists(evidence_path), "No evidence file found. Run benchmark first."
         
     with open(evidence_path, "r") as f:
         data = json.loads(f.readline())
@@ -128,15 +127,46 @@ def test_expected_outputs_exist():
         
         assert os.path.exists(path), f"Artifact missing: {path}"
         
-        # Check if it opens if it's an image
         if path.endswith(".png"):
             img = Image.open(path)
             img.verify()
             
-        # Verify hash
         h = hashlib.sha256()
         with open(path, "rb") as f2:
             for chunk in iter(lambda: f2.read(4096), b""):
                 h.update(chunk)
         assert h.hexdigest() == expected_hash, f"Hash mismatch for {path}"
+
+def test_no_tracked_pyc_files():
+    """Confirm no .pyc or __pycache__ path is tracked by Git."""
+    import subprocess
+    res = subprocess.run(["git", "ls-files"], capture_output=True, text=True)
+    if res.returncode == 0:
+        tracked_files = res.stdout.splitlines()
+        for f in tracked_files:
+            assert not f.endswith(".pyc"), f"Tracked pyc file found: {f}"
+            assert "__pycache__" not in f, f"Tracked pycache path found: {f}"
+
+def test_ringing_overflow_regression():
+    """Test that calculate_ringing_percentage doesn't overflow on uint8."""
+    img1 = np.full((10, 10, 3), 254, dtype=np.uint8)
+    img2 = np.full((10, 10, 3), 255, dtype=np.uint8)
+    pct = calculate_ringing_percentage(img1, img2)
+    # local_max is 254. 254+5=259. 255 is not > 259.
+    # If uint8 overflowed, 254+5 = 3. 255 > 3 -> 100% ringing.
+    assert pct == 0.0
+
+def test_edge_precision_recall_formulation():
+    """Test explicit precision and recall formulation of edge F1."""
+    true_img = np.zeros((30, 30, 3), dtype=np.uint8)
+    pred_img = np.zeros((30, 30, 3), dtype=np.uint8)
+    
+    true_img[5:15, 5:15] = 255
+    pred_img[5:15, 5:15] = 255
+    # false positive edge
+    pred_img[20:25, 20:25] = 255
+    
+    stats = edge_f1_score(true_img, pred_img, tolerance=1)
+    assert stats["precision"] < 1.0
+    assert stats["recall"] == pytest.approx(1.0)
 

@@ -38,7 +38,7 @@
           "gradient_energy_error": 0.3678039585449303,
           "laplacian_variance_error": 0.8504526072405449,
           "ringing_percent": 0.2702020202020202,
-          "runtime_ms": 1.9984245300292969
+          "runtime_ms": 0.9999275207519531
         },
         "Hybrid": {
           "psnr": 22.937609806772947,
@@ -49,7 +49,7 @@
           "gradient_energy_error": 0.3945002804239394,
           "laplacian_variance_error": 0.5221180267986083,
           "ringing_percent": 7.15530303030303,
-          "runtime_ms": 13.019084930419922
+          "runtime_ms": 10.999202728271484
         }
       }
     },
@@ -87,7 +87,7 @@
           "gradient_energy_error": 0.7347825052555903,
           "laplacian_variance_error": 0.9871267784996425,
           "ringing_percent": 3.5681818181818183,
-          "runtime_ms": 1.0025501251220703
+          "runtime_ms": 0.9951591491699219
         },
         "Hybrid": {
           "psnr": 21.960307062217424,
@@ -98,7 +98,7 @@
           "gradient_energy_error": 0.4165004478592109,
           "laplacian_variance_error": 0.7590011420409394,
           "ringing_percent": 8.371212121212121,
-          "runtime_ms": 11.080503463745117
+          "runtime_ms": 11.535406112670898
         }
       }
     },
@@ -136,7 +136,7 @@
           "gradient_energy_error": 0.8872335339451799,
           "laplacian_variance_error": 0.9977070834826246,
           "ringing_percent": 16.81060606060606,
-          "runtime_ms": 0.9992122650146484
+          "runtime_ms": 0.9996891021728516
         },
         "Hybrid": {
           "psnr": 20.11136183805968,
@@ -147,7 +147,7 @@
           "gradient_energy_error": 0.7981427125342552,
           "laplacian_variance_error": 0.975151220906449,
           "ringing_percent": 17.752525252525253,
-          "runtime_ms": 10.504007339477539
+          "runtime_ms": 11.51275634765625
         }
       }
     }
