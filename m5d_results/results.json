@@ -1,0 +1,344 @@
+{
+  "status": "NO_MEASURABLE_GAIN",
+  "selected_config": "none",
+  "rejection_reasons": {
+    "SCPB_A": [
+      "8x: Insufficient PSF confidence",
+      "2x: Source RMSE worse than Lanczos",
+      "2x: Clipping >= 0.10%",
+      "4x: Source RMSE worse than Lanczos",
+      "4x: Clipping >= 0.10%",
+      "8x: Clipping >= 0.10%",
+      "Edge F1 improved in fewer than 2 scales"
+    ],
+    "SCPB_B": [
+      "8x: Insufficient PSF confidence",
+      "2x: Ringing increased by > 0.20%",
+      "2x: Source RMSE worse than Lanczos",
+      "2x: Clipping >= 0.10%",
+      "2x: Tiling error > 1",
+      "4x: Ringing increased by > 0.20%",
+      "4x: Clipping >= 0.10%",
+      "8x: Clipping >= 0.10%"
+    ],
+    "SCPB_C": [
+      "8x: Insufficient PSF confidence",
+      "2x: PSNR loss > 0.10 dB",
+      "2x: SSIM loss > 0.002",
+      "2x: Ringing increased by > 0.20%",
+      "2x: Clipping >= 0.10%",
+      "2x: Regional SSIM loss > 0.01 in headlamp",
+      "4x: PSNR loss > 0.10 dB",
+      "4x: SSIM loss > 0.002",
+      "4x: Clipping >= 0.10%",
+      "4x: Regional SSIM loss > 0.01 in wheel",
+      "4x: Regional SSIM loss > 0.01 in headlamp",
+      "8x: Clipping >= 0.10%"
+    ]
+  },
+  "reconstruction_benchmark": [
+    {
+      "scale": 2,
+      "metrics": {
+        "Lanczos": {
+          "psnr": 25.463041196598887,
+          "ssim": 0.8248486055568417,
+          "edge_f1": 0.882731614278791,
+          "ringing_percent": 17.146170012319732,
+          "clipping_percent": 3.5787037037037033,
+          "source_rmse": 0.03793376684188843,
+          "region_wheel": {
+            "ssim": 0.7591718456522757
+          },
+          "region_headlamp": {
+            "ssim": 0.8300111528688641
+          },
+          "region_plate": {
+            "ssim": 0.7061114500129265
+          }
+        },
+        "SCPB_A": {
+          "psnr": 25.463041196598887,
+          "ssim": 0.8248486055568417,
+          "edge_f1": 0.882731614278791,
+          "ringing_percent": 17.146170012319732,
+          "clipping_percent": 3.5787037037037033,
+          "source_rmse": 0.03819083049893379,
+          "region_wheel": {
+            "ssim": 0.7591718456522757
+          },
+          "region_headlamp": {
+            "ssim": 0.8300111528688641
+          },
+          "region_plate": {
+            "ssim": 0.7061114500129265
+          },
+          "runtime_ms": 1589.2696380615234,
+          "tiling_equivalence_max_error": 0.0
+        },
+        "SCPB_B": {
+          "psnr": 25.453883362629277,
+          "ssim": 0.8249270885691976,
+          "edge_f1": 0.8838225864021575,
+          "ringing_percent": 17.3490832669034,
+          "clipping_percent": 3.7091750841750843,
+          "source_rmse": 0.03812944444944248,
+          "region_wheel": {
+            "ssim": 0.7592297400028354
+          },
+          "region_headlamp": {
+            "ssim": 0.8297386593481016
+          },
+          "region_plate": {
+            "ssim": 0.7054512513582066
+          },
+          "runtime_ms": 3424.757242202759,
+          "tiling_equivalence_max_error": 7.0
+        },
+        "SCPB_C": {
+          "psnr": 24.880147378725304,
+          "ssim": 0.8156630699122488,
+          "edge_f1": 0.9058652129925032,
+          "ringing_percent": 18.428871657366475,
+          "clipping_percent": 7.9490740740740735,
+          "source_rmse": 0.035633156661288086,
+          "region_wheel": {
+            "ssim": 0.7559324159805877
+          },
+          "region_headlamp": {
+            "ssim": 0.8148951442043559
+          },
+          "region_plate": {
+            "ssim": 0.7087305557194085
+          },
+          "runtime_ms": 9978.61909866333,
+          "tiling_equivalence_max_error": 1.0
+        }
+      }
+    },
+    {
+      "scale": 4,
+      "metrics": {
+        "Lanczos": {
+          "psnr": 21.936495955801206,
+          "ssim": 0.5955329190241366,
+          "edge_f1": 0.45493288665218906,
+          "ringing_percent": 24.465540981230525,
+          "clipping_percent": 3.897306397306397,
+          "source_rmse": 0.044177208095788956,
+          "region_wheel": {
+            "ssim": 0.4740151980502334
+          },
+          "region_headlamp": {
+            "ssim": 0.5683102806052741
+          },
+          "region_plate": {
+            "ssim": 0.3708338033393514
+          }
+        },
+        "SCPB_A": {
+          "psnr": 21.936495955801206,
+          "ssim": 0.5955329190241366,
+          "edge_f1": 0.45493288665218906,
+          "ringing_percent": 24.465540981230525,
+          "clipping_percent": 3.897306397306397,
+          "source_rmse": 0.04446864128112793,
+          "region_wheel": {
+            "ssim": 0.4740151980502334
+          },
+          "region_headlamp": {
+            "ssim": 0.5683102806052741
+          },
+          "region_plate": {
+            "ssim": 0.3708338033393514
+          },
+          "runtime_ms": 3697.2248554229736,
+          "tiling_equivalence_max_error": 0.0
+        },
+        "SCPB_B": {
+          "psnr": 21.888590308104984,
+          "ssim": 0.5945163991912408,
+          "edge_f1": 0.4619031518780881,
+          "ringing_percent": 25.929415175012682,
+          "clipping_percent": 5.546296296296297,
+          "source_rmse": 0.043233004634061614,
+          "region_wheel": {
+            "ssim": 0.47738003718060934
+          },
+          "region_headlamp": {
+            "ssim": 0.5662670315990279
+          },
+          "region_plate": {
+            "ssim": 0.36729888712069575
+          },
+          "runtime_ms": 7346.21262550354,
+          "tiling_equivalence_max_error": 1.0
+        },
+        "SCPB_C": {
+          "psnr": 21.644674958118657,
+          "ssim": 0.5866700350721428,
+          "edge_f1": 0.48008755092466154,
+          "ringing_percent": 21.711718240452207,
+          "clipping_percent": 9.56439393939394,
+          "source_rmse": 0.04045907932741738,
+          "region_wheel": {
+            "ssim": 0.4615919202355234
+          },
+          "region_headlamp": {
+            "ssim": 0.5559450076753902
+          },
+          "region_plate": {
+            "ssim": 0.38411082213918646
+          },
+          "runtime_ms": 9252.783298492432,
+          "tiling_equivalence_max_error": 0.0
+        }
+      }
+    },
+    {
+      "scale": 8,
+      "metrics": {
+        "Lanczos": {
+          "psnr": 19.374097240730396,
+          "ssim": 0.4228629605300591,
+          "edge_f1": 0.054624216627138074,
+          "ringing_percent": 31.48778897021523,
+          "clipping_percent": 3.869949494949495,
+          "source_rmse": 0.0850159302353859,
+          "region_wheel": {
+            "ssim": 0.27250033259984047
+          },
+          "region_headlamp": {
+            "ssim": 0.3242095059938302
+          },
+          "region_plate": {
+            "ssim": 0.22588678270956797
+          }
+        },
+        "SCPB_A": {
+          "psnr": 19.374097240730396,
+          "ssim": 0.4228629605300591,
+          "edge_f1": 0.054624216627138074,
+          "ringing_percent": 31.48778897021523,
+          "clipping_percent": 3.869949494949495,
+          "source_rmse": 0.0850159302353859,
+          "region_wheel": {
+            "ssim": 0.27250033259984047
+          },
+          "region_headlamp": {
+            "ssim": 0.3242095059938302
+          },
+          "region_plate": {
+            "ssim": 0.22588678270956797
+          },
+          "runtime_ms": 0.0,
+          "tiling_equivalence_max_error": 0.0
+        },
+        "SCPB_B": {
+          "psnr": 19.374097240730396,
+          "ssim": 0.4228629605300591,
+          "edge_f1": 0.054624216627138074,
+          "ringing_percent": 31.48778897021523,
+          "clipping_percent": 3.869949494949495,
+          "source_rmse": 0.0850159302353859,
+          "region_wheel": {
+            "ssim": 0.27250033259984047
+          },
+          "region_headlamp": {
+            "ssim": 0.3242095059938302
+          },
+          "region_plate": {
+            "ssim": 0.22588678270956797
+          },
+          "runtime_ms": 0.0,
+          "tiling_equivalence_max_error": 0.0
+        },
+        "SCPB_C": {
+          "psnr": 19.374097240730396,
+          "ssim": 0.4228629605300591,
+          "edge_f1": 0.054624216627138074,
+          "ringing_percent": 31.48778897021523,
+          "clipping_percent": 3.869949494949495,
+          "source_rmse": 0.0850159302353859,
+          "region_wheel": {
+            "ssim": 0.27250033259984047
+          },
+          "region_headlamp": {
+            "ssim": 0.3242095059938302
+          },
+          "region_plate": {
+            "ssim": 0.22588678270956797
+          },
+          "runtime_ms": 0.0,
+          "tiling_equivalence_max_error": 0.0
+        }
+      }
+    }
+  ],
+  "operational_results": {
+    "2x": {
+      "SCPB_A": {
+        "tile_count": 1,
+        "dimensions": "720x440"
+      },
+      "SCPB_B": {
+        "tile_count": 1,
+        "dimensions": "720x440"
+      },
+      "SCPB_C": {
+        "tile_count": 1,
+        "dimensions": "720x440"
+      }
+    },
+    "4x": {
+      "SCPB_A": {
+        "tile_count": 2,
+        "dimensions": "1440x880"
+      },
+      "SCPB_B": {
+        "tile_count": 2,
+        "dimensions": "1440x880"
+      },
+      "SCPB_C": {
+        "tile_count": 2,
+        "dimensions": "1440x880"
+      }
+    },
+    "8x": {
+      "SCPB_A": {
+        "tile_count": 6,
+        "dimensions": "2880x1760"
+      },
+      "SCPB_B": {
+        "tile_count": 6,
+        "dimensions": "2880x1760"
+      },
+      "SCPB_C": {
+        "tile_count": 6,
+        "dimensions": "2880x1760"
+      }
+    }
+  },
+  "psf_results": {
+    "2x": {
+      "confidence": 0.9459101822456812,
+      "sigma": 0.6196321337218749,
+      "reason": "Success",
+      "accepted_count": 30
+    },
+    "4x": {
+      "confidence": 0.6,
+      "sigma": 0.6266644663368316,
+      "reason": "Success",
+      "accepted_count": 9
+    },
+    "8x": {
+      "confidence": 0.0,
+      "sigma": 1.0,
+      "reason": "Insufficient accepted edges",
+      "accepted_count": 1
+    }
+  },
+  "peak_ram_mb": 580.078125,
+  "peak_ram_bytes": 608256000
+}
