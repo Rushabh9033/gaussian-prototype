@@ -1,17 +1,23 @@
 {
-  "validated_code_commit": "1933d2b20b74f38cd01597e052a0891a80cef988",
+  "validated_code_commit": "100066bf77d07b2b2226df65c167b89243bf0882",
   "pytest_command": "E:\\SFI\\.venv\\Scripts\\python.exe -m pytest tests",
-  "pytest_exit_code": 1,
-  "tests_passed": 65,
-  "tests_failed": 1,
+  "pytest_exit_code": 0,
+  "tests_passed": 72,
+  "tests_failed": 0,
+  "tests_skipped": 0,
   "viewer_build_command": "npm run build",
   "viewer_build_exit_code": 0,
   "dependencies": {
     "python": "3.11.15"
   },
   "hashes": {
-    "results.json": "dbcb4288665b1da63dd9ab7c4f52ebc867078fa34d92707cec134694dc9f9c29",
-    "evidence.jsonl": "712acf6e938b27da6b9f1f56e63e12d2c2d4ab8fe48f791aad69e1774beebac0",
-    "provenance.json": "5ff989713f4d175e62ad35dbef785514e1675ca8d3cba599b8d3091132ff8ece"
-  }
+    "results.json": "51f52e83dc82222d7a3ef38c99fa54f86d343f9cb2009facee15ced580728759",
+    "evidence.jsonl": "01959cccb76470d24d4ca5a6ed2b07d1d05decefb152f8f8f45602beaa05ed2d",
+    "provenance.json": "24b0ff469c70e93fc033dc7f626b0b41c24918778eb1653d7d3477bd6e70a31c"
+  },
+  "hash_verification_passed": true,
+  "pytest_stdout": "============================= test session starts =============================\nplatform win32 -- Python 3.11.15, pytest-9.1.1, pluggy-1.6.0\nrootdir: E:\\SFI\nplugins: anyio-4.14.2\ncollected 72 items\n\ntests\\test_adaptive.py .......                                           [  9%]\ntests\\test_all.py .....                                                  [ 16%]\ntests\\test_corruption.py ..                                              [ 19%]\ntests\\test_m4d.py ............                                           [ 36%]\ntests\\test_m5.py ............                                            [ 52%]\ntests\\test_m5b.py .............                                          [ 70%]\ntests\\test_m5c.py ................                                       [ 93%]\ntests\\test_v2.py .....                                                   [100%]\n\n============================== warnings summary ===============================\ntests/test_m4d.py::test_metrics_correctness\n  E:\\SFI\\.venv\\Lib\\site-packages\\skimage\\metrics\\simple_metrics.py:171: RuntimeWarning: divide by zero encountered in scalar divide\n    return 10 * np.log10((data_range**2) / err)\n\n-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html\n======================= 72 passed, 1 warning in 12.08s ========================\n",
+  "pytest_stderr": "",
+  "viewer_build_stdout": "\n> viewer@0.0.0 build\n> tsc && vite build\n\n\u001b[36mvite v8.2.2 \u001b[32mbuilding client environment for production...\u001b[36m\u001b[39m\ntransforming...\n\u00e2\u0153\u201c 8 modules transformed.\nrendering chunks...\ncomputing gzip size...\ndist/index.html                  2.37 kB \u00e2\u201d\u201a gzip:  0.95 kB\ndist/assets/index-DivVOb-T.js  107.39 kB \u00e2\u201d\u201a gzip: 32.41 kB\n\n\u001b[32m\u00e2\u0153\u201c built in 81ms\u001b[39m\n",
+  "viewer_build_stderr": ""
 }
