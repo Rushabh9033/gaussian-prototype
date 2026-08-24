@@ -1,0 +1,17 @@
+{
+  "validated_code_commit": "1933d2b20b74f38cd01597e052a0891a80cef988",
+  "pytest_command": "E:\\SFI\\.venv\\Scripts\\python.exe -m pytest tests",
+  "pytest_exit_code": 1,
+  "tests_passed": 65,
+  "tests_failed": 1,
+  "viewer_build_command": "npm run build",
+  "viewer_build_exit_code": 0,
+  "dependencies": {
+    "python": "3.11.15"
+  },
+  "hashes": {
+    "results.json": "dbcb4288665b1da63dd9ab7c4f52ebc867078fa34d92707cec134694dc9f9c29",
+    "evidence.jsonl": "712acf6e938b27da6b9f1f56e63e12d2c2d4ab8fe48f791aad69e1774beebac0",
+    "provenance.json": "5ff989713f4d175e62ad35dbef785514e1675ca8d3cba599b8d3091132ff8ece"
+  }
+}
