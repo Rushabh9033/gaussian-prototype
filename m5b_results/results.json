@@ -1,0 +1,220 @@
+{
+  "status": "NO_MEASURABLE_GAIN",
+  "selected_config": "none",
+  "peak_ram_bytes": 126656512,
+  "reconstruction_benchmark": [
+    {
+      "scale": "2x",
+      "metrics": {
+        "Bicubic": {
+          "global_psnr": 26.80387732558415,
+          "global_ssim": 0.8595758634275098,
+          "global_edge_precision": 0.9886287625416738,
+          "global_edge_recall": 0.758573788011196,
+          "global_edge_f1": 0.8584555519009789,
+          "global_gradient_energy": 13224.347424242424,
+          "global_laplacian_variance": 273.57396049127635,
+          "global_ringing_percent": 0.23484848484848483,
+          "global_color_hist_dist": 0.15523427350834354,
+          "runtime_ms": 0.0
+        },
+        "Lanczos": {
+          "global_psnr": 26.843342133575362,
+          "global_ssim": 0.8601619155708824,
+          "global_edge_precision": 0.9810709838105877,
+          "global_edge_recall": 0.7945205479451283,
+          "global_edge_f1": 0.8779959143198892,
+          "global_gradient_energy": 14174.895656565657,
+          "global_laplacian_variance": 297.18504743393527,
+          "global_ringing_percent": 0.42045454545454547,
+          "global_color_hist_dist": 0.15186716528469535,
+          "runtime_ms": 0.0
+        },
+        "EDR_A": {
+          "global_psnr": 24.58519500472537,
+          "global_ssim": 0.7150212403982836,
+          "global_edge_precision": 0.9971656789484676,
+          "global_edge_recall": 0.4020207908286795,
+          "global_edge_f1": 0.5730205990562779,
+          "global_gradient_energy": 8303.933686868686,
+          "global_laplacian_variance": 229.15008383057213,
+          "global_ringing_percent": 1.48989898989899,
+          "global_color_hist_dist": 0.2804966518639896,
+          "runtime_ms": 102.36072540283203,
+          "tile_seam_max_error": 255.0,
+          "tile_seam_mean_error": 85.49090909090908
+        },
+        "EDR_B": {
+          "global_psnr": 25.215194149096646,
+          "global_ssim": 0.7543323960519501,
+          "global_edge_precision": 0.9946592608414879,
+          "global_edge_recall": 0.49013892936942677,
+          "global_edge_f1": 0.6566834847753128,
+          "global_gradient_energy": 9561.434116161616,
+          "global_laplacian_variance": 301.70851186725207,
+          "global_ringing_percent": 0.6780303030303031,
+          "global_color_hist_dist": 0.2621186751108686,
+          "runtime_ms": 104.82954978942871,
+          "tile_seam_max_error": 255.0,
+          "tile_seam_mean_error": 98.41363636363636
+        },
+        "EDR_C": {
+          "global_psnr": 25.449143601448526,
+          "global_ssim": 0.7864855945389319,
+          "global_edge_precision": 0.9909485879795453,
+          "global_edge_recall": 0.5767997668317714,
+          "global_edge_f1": 0.7291717607231425,
+          "global_gradient_energy": 10025.234141414141,
+          "global_laplacian_variance": 336.5692608852094,
+          "global_ringing_percent": 0.28787878787878785,
+          "global_color_hist_dist": 0.24392391560621637,
+          "runtime_ms": 90.94429016113281,
+          "tile_seam_max_error": 255.0,
+          "tile_seam_mean_error": 98.01212121212122
+        }
+      }
+    },
+    {
+      "scale": "4x",
+      "metrics": {
+        "Bicubic": {
+          "global_psnr": 22.82354693142238,
+          "global_ssim": 0.6526202114714784,
+          "global_edge_precision": 0.9604159677957195,
+          "global_edge_recall": 0.30146701641889617,
+          "global_edge_f1": 0.45889157667531205,
+          "global_gradient_energy": 5644.475833333333,
+          "global_laplacian_variance": 25.52213118543388,
+          "global_ringing_percent": 3.7297979797979797,
+          "global_color_hist_dist": 0.23311529876214931,
+          "runtime_ms": 0.0
+        },
+        "Lanczos": {
+          "global_psnr": 22.84097382158905,
+          "global_ssim": 0.6516857732033371,
+          "global_edge_precision": 0.9394479073906383,
+          "global_edge_recall": 0.3387739240260042,
+          "global_edge_f1": 0.49797374122930205,
+          "global_gradient_energy": 5906.6821717171715,
+          "global_laplacian_variance": 24.871085577364553,
+          "global_ringing_percent": 3.7083333333333335,
+          "global_color_hist_dist": 0.22464884855767878,
+          "runtime_ms": 0.0
+        },
+        "EDR_A": {
+          "global_psnr": 21.527730155190877,
+          "global_ssim": 0.5381146716156984,
+          "global_edge_precision": 0.8698252069913203,
+          "global_edge_recall": 0.18925483338189164,
+          "global_edge_f1": 0.3108709789433211,
+          "global_gradient_energy": 3807.880984848485,
+          "global_laplacian_variance": 45.01728359590221,
+          "global_ringing_percent": 10.416666666666668,
+          "global_color_hist_dist": 0.3866521934219417,
+          "runtime_ms": 94.52247619628906,
+          "tile_seam_max_error": 255.0,
+          "tile_seam_mean_error": 63.60909090909091
+        },
+        "EDR_B": {
+          "global_psnr": 21.87507209291717,
+          "global_ssim": 0.5656243504872945,
+          "global_edge_precision": 0.804692082111201,
+          "global_edge_recall": 0.2758185174390094,
+          "global_edge_f1": 0.41082239631855844,
+          "global_gradient_energy": 4614.033661616161,
+          "global_laplacian_variance": 96.75039041918554,
+          "global_ringing_percent": 7.402777777777778,
+          "global_color_hist_dist": 0.3640898184491738,
+          "runtime_ms": 92.2994613647461,
+          "tile_seam_max_error": 255.0,
+          "tile_seam_mean_error": 77.47727272727273
+        },
+        "EDR_C": {
+          "global_psnr": 21.786181462523295,
+          "global_ssim": 0.5837803623159135,
+          "global_edge_precision": 0.7725744476463081,
+          "global_edge_recall": 0.32536675410469973,
+          "global_edge_f1": 0.45789344585133757,
+          "global_gradient_energy": 5516.627651515151,
+          "global_laplacian_variance": 250.14728440831934,
+          "global_ringing_percent": 5.974747474747475,
+          "global_color_hist_dist": 0.34940531233815403,
+          "runtime_ms": 88.55772018432617,
+          "tile_seam_max_error": 255.0,
+          "tile_seam_mean_error": 75.30757575757576
+        }
+      }
+    },
+    {
+      "scale": "8x",
+      "metrics": {
+        "Bicubic": {
+          "global_psnr": 20.280946044387914,
+          "global_ssim": 0.46131554694688065,
+          "global_edge_precision": 0.9235294117592734,
+          "global_edge_recall": 0.017973379966966095,
+          "global_edge_f1": 0.03526053274925245,
+          "global_gradient_energy": 2355.3784343434345,
+          "global_laplacian_variance": 4.242246454443424,
+          "global_ringing_percent": 18.015151515151516,
+          "global_color_hist_dist": 0.33885426177298317,
+          "runtime_ms": 0.0
+        },
+        "Lanczos": {
+          "global_psnr": 20.33665054719087,
+          "global_ssim": 0.4626565594061414,
+          "global_edge_precision": 0.9407407407372566,
+          "global_edge_recall": 0.029631788594187348,
+          "global_edge_f1": 0.05745387442479277,
+          "global_gradient_energy": 2430.4896464646463,
+          "global_laplacian_variance": 4.069961925919549,
+          "global_ringing_percent": 17.61868686868687,
+          "global_color_hist_dist": 0.3342841558379071,
+          "runtime_ms": 2.0046234130859375
+        },
+        "EDR_A": {
+          "global_psnr": 19.231554707056347,
+          "global_ssim": 0.41168177068696216,
+          "global_edge_precision": 0.6824146981621326,
+          "global_edge_recall": 0.07898571844942398,
+          "global_edge_f1": 0.14158388665944105,
+          "global_gradient_energy": 1965.2711616161616,
+          "global_laplacian_variance": 11.107478569629375,
+          "global_ringing_percent": 25.406565656565654,
+          "global_color_hist_dist": 0.5274505562066845,
+          "runtime_ms": 130.83529472351074,
+          "tile_seam_max_error": 255.0,
+          "tile_seam_mean_error": 74.73484848484848
+        },
+        "EDR_B": {
+          "global_psnr": 19.454235928277544,
+          "global_ssim": 0.4174958034491754,
+          "global_edge_precision": 0.5998112317127892,
+          "global_edge_recall": 0.1261051199844432,
+          "global_edge_f1": 0.20839664807690544,
+          "global_gradient_energy": 2473.437626262626,
+          "global_laplacian_variance": 44.171458646439135,
+          "global_ringing_percent": 23.065656565656564,
+          "global_color_hist_dist": 0.4995094506928666,
+          "runtime_ms": 99.22051429748535,
+          "tile_seam_max_error": 255.0,
+          "tile_seam_mean_error": 64.42121212121212
+        },
+        "EDR_C": {
+          "global_psnr": 19.237907033962273,
+          "global_ssim": 0.4157116037808983,
+          "global_edge_precision": 0.5661334373778517,
+          "global_edge_recall": 0.14961624404933938,
+          "global_edge_f1": 0.23668262972602117,
+          "global_gradient_energy": 3685.394343434343,
+          "global_laplacian_variance": 244.76674579108638,
+          "global_ringing_percent": 22.21969696969697,
+          "global_color_hist_dist": 0.47179720361713695,
+          "runtime_ms": 97.55396842956543,
+          "tile_seam_max_error": 255.0,
+          "tile_seam_mean_error": 69.02272727272727
+        }
+      }
+    }
+  ]
+}
