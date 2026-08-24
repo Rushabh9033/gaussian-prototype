@@ -249,7 +249,7 @@ def main():
             pickle.dump(spl, f)
             
         # Base residual
-        c_field = extract_color_field(gt_lin, d=best_cfg['d'], sig_c=best_cfg['sig_c'], sig_s=best_cfg['sig_s'])
+        c_field = extract_color_field(gt_lin, d=best_cfg['d'], sigma_color=best_cfg['sig_c'], sigma_space=best_cfg['sig_s'])
         base = render_scale(c_field, spl, np.zeros_like(gt_lin), (w, h), (h, w), gt_lin)
         res = extract_source_residuals(gt_lin, base)
         
