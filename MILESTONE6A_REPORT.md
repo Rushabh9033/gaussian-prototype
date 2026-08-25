@@ -45,50 +45,44 @@ All frames accepted. Sub-pixel alignment was estimated without access to ground-
 
 ### 2× Scale (8 frames → 360×220)
 
-| Method | PSNR (dB) | SSIM | Edge F1 | Ringing % |
-|--------|-----------|------|---------|-----------|
-| Lanczos (single frame) | 24.24 | 0.7560 | 0.6840 | 10.39% |
-| Shift-and-Add | — | — | — | — |
-| Robust Fusion | — | — | — | — |
-| **Multi-Frame SR** | **25.09** | **0.7978** | **0.7660** | **10.58%** |
-| **Gain** | **+0.848 dB** | **+0.0418** | **+0.082** | **+0.19%** |
+- Lanczos PSNR: 24.2398 dB
+- Multi-Frame SR PSNR: 24.2481 dB
+- PSNR gain: +0.0084 dB
+- Lanczos SSIM: 0.7560
+- Multi-Frame SR SSIM: 0.7571
+- SSIM gain: +0.0010
+- Edge F1 change: −0.0108
 
 ### 4× Scale (16 frames → 360×220)
 
-| Method | PSNR (dB) | SSIM | Edge F1 | Ringing % |
-|--------|-----------|------|---------|-----------|
-| Lanczos (single frame) | 21.03 | 0.5401 | 0.2176 | 20.61% |
-| **Multi-Frame SR** | **21.54** | **0.5691** | **0.2643** | **19.83%** |
-| **Gain** | **+0.512 dB** | **+0.0290** | **+0.047** | **−0.78%** |
+- Lanczos PSNR: 21.0308 dB
+- Multi-Frame SR PSNR: 21.0453 dB
+- PSNR gain: +0.0145 dB
+- Lanczos SSIM: 0.5401
+- Multi-Frame SR SSIM: 0.5427
+- SSIM gain: +0.0026
+- Edge F1 change: −0.0332
 
-## 6. Acceptance Verification
+### Memory
 
-| Criterion | Required | 2× | 4× | Pass |
-|-----------|----------|-----|-----|------|
-| PSNR gain | ≥0.50 / ≥0.25 dB | +0.848 | +0.512 | ✅ |
-| SSIM gain | ≥0.005 / ≥0.003 | +0.0418 | +0.0290 | ✅ |
-| Edge F1 improved | both scales | +0.082 | +0.047 | ✅ |
-| Ringing increase | ≤0.20% | +0.19% | −0.78% | ✅ |
-| Registration RMSE | ≤0.25 LR px | 0.0191 | 0.0205 | ✅ |
-| No corrupt output | — | ✅ | ✅ | ✅ |
-| Evidence hashes | — | ✅ | ✅ | ✅ |
-| Tests pass | — | 105 passed | — | ✅ |
-| Viewer build | — | exit 0 | — | ✅ |
+- Maximum measured Python allocation: approximately 122.46 MB
 
-## 7. Limitations
+## 6. Limitations
 
 1. **This is a controlled experiment.** The LR frames were synthetically generated from a known HR ground truth with known sub-pixel translations. Real-world multi-frame SR faces motion blur, varying illumination, occlusion, and non-translational motion.
 2. **Translation-only model.** The registration and reconstruction assume pure translation. Real cameras produce rotation, zoom, and lens distortion.
-3. **The original single-image vision has NOT been achieved.** This milestone proves only that multiple independently sampled observations of the same scene can recover additional spatial information that is absent from any single observation.
-4. **Gains diminish at higher scale factors.** The 4× experiment shows smaller PSNR/SSIM gains because the information deficit grows quadratically with scale factor.
+3. **The original single-image vision has NOT been achieved.** This milestone evaluates whether multiple independently sampled observations of the same scene can recover additional spatial information that is absent from any single observation.
+4. **EVIDENCE LIMITATION:** The benchmark used committed code `3af56b61b7a17ffdd43c9fb7974831a4f7d8c61b`, but the run did not begin with a clean tree because previously tracked evidence files had been removed before execution.
 
-## 8. Test Results
+## 7. Test Results
 
-- **pytest**: 105 passed, 0 failed (includes all M4D, M5, M5B, M5C, M5D, M6A tests)
+- **pytest**: 112 passed, 0 failed (includes all M4D, M5, M5B, M5C, M5D, M6A tests)
 - **Viewer build**: exit code 0
 
-## 9. Final Status
+## 8. Final Status
 
-**CONTROLLED_GAIN_CONFIRMED**
+**NO_MEASURABLE_GAIN**
 
-Multiple independently captured low-resolution frames with different sub-pixel sampling positions contain genuinely different spatial information. Classical registration, robust fusion, and regularized back-projection can recover a measurable portion of this information, producing a super-resolved image that objectively exceeds single-frame Lanczos interpolation in PSNR, SSIM, and edge fidelity at both 2× and 4× scales.
+Registration succeeded and multiple frames were aligned correctly. However, Robust Fusion produced only a very small quality change. The corrected iterative back-projection algorithm accepted no useful improvement over the baseline constraints and returned results identical to Robust Fusion.
+
+As a result, the required PSNR, SSIM, and edge thresholds were not achieved. The experiment does not achieve the original single-image vision. Milestone 6A is closed as a completed negative experiment.
