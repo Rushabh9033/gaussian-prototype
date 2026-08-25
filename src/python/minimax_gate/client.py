@@ -39,18 +39,11 @@ def generate_image(reference_url, seed):
         "seed": seed
     }
     
-    def _make_call():
-        check_budget()
-        try:
-            return requests.post(API_ENDPOINT, headers=headers, json=payload, timeout=45)
-        except requests.exceptions.RequestException as e:
-            raise APIError(redact_secrets(str(e)))
-            
-    response = _make_call()
-    
-    if 500 <= response.status_code < 600:
-        time.sleep(2)
-        response = _make_call()
+    check_budget()
+    try:
+        response = requests.post(API_ENDPOINT, headers=headers, json=payload, timeout=45)
+    except requests.exceptions.RequestException as e:
+        raise APIError(redact_secrets(str(e)))
         
     if response.status_code == 400 and "character" in response.text.lower():
         raise VehicleReferenceRejectedError("Vehicle reference rejected.")
@@ -59,7 +52,11 @@ def generate_image(reference_url, seed):
     if response.status_code == 429:
         raise QuotaError("Quota exceeded or rate limited.")
         
-    response.raise_for_status()
+    try:
+        response.raise_for_status()
+    except requests.exceptions.RequestException as e:
+        raise APIError(redact_secrets(str(e)))
+        
     data = response.json()
     
     base_resp = data.get('base_resp', {})
