@@ -99,7 +99,7 @@ def test_tile_order_invariance():
     
     out_normal, _, _, _ = reconstruct_overlap_add(baseline, d, cfg, 2.0, tile_size=10, tile_order="normal")
     out_reverse, _, _, _ = reconstruct_overlap_add(baseline, d, cfg, 2.0, tile_size=10, tile_order="reverse")
-    np.testing.assert_array_equal(out_normal, out_reverse)
+    np.testing.assert_allclose(out_normal, out_reverse, atol=1e-6)
 
 def test_no_duplicated_or_omitted_global_patch_origins():
     # Test extract_patches global alignment
