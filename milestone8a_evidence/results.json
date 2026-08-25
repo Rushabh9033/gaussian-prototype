@@ -1,5 +1,6 @@
 {
   "final_status": "NO_USEFUL_GAIN",
+  "status_derivation": "All SSIM, PSNR, and regional SSIM guardrails failed at both scales. Edge-F1 improved slightly but does not satisfy the measurable-improvement condition (SSIM +0.002 required). Status derived as NO_USEFUL_GAIN.",
   "metrics_2x": {
     "realesrgan": {
       "psnr": 23.69399674421254,
@@ -99,17 +100,23 @@
   },
   "guardrails": {
     "ssim_deg_limit": 0.01,
-    "psnr_deg_limit": 1.0,
+    "psnr_deg_limit_db": 1.0,
     "edge_f1_deg_limit": 0.02,
-    "regional_ssim_deg_limit": 0.03
+    "orb_inlier_ratio_deg_limit": 0.05,
+    "regional_ssim_deg_limit": 0.03,
+    "vram_reserved_limit_gb": 7.5,
+    "improvement_condition": "SSIM +0.002 OR edge-F1 +0.01 OR Laplacian variance 10% closer to GT"
   },
   "evaluation_2x": {
     "ssim_degradation": 0.10002701910245804,
     "ssim_pass": false,
-    "psnr_degradation": 3.1493453893628214,
+    "psnr_degradation_db": 3.1493453893628214,
     "psnr_pass": false,
-    "edge_f1_degradation": -0.0047972842218246825,
+    "edge_f1_change": 0.0047972842498641,
+    "edge_f1_improved": true,
     "edge_f1_pass": true,
+    "orb_inlier_ratio_degradation": 0.008744827586206893,
+    "orb_inlier_ratio_pass": true,
     "regions": {
       "plate_degradation": 0.1546772985670296,
       "plate_pass": false,
@@ -124,10 +131,13 @@
   "evaluation_4x": {
     "ssim_degradation": 0.03730933532133385,
     "ssim_pass": false,
-    "psnr_degradation": 1.6562131553576513,
+    "psnr_degradation_db": 1.6562131553576513,
     "psnr_pass": false,
-    "edge_f1_degradation": -0.07926579536738265,
+    "edge_f1_change": 0.07926579621194849,
+    "edge_f1_improved": true,
     "edge_f1_pass": true,
+    "orb_inlier_ratio_degradation": -0.024385059216519883,
+    "orb_inlier_ratio_pass": true,
     "regions": {
       "plate_degradation": 0.09320308959970763,
       "plate_pass": false,
@@ -139,6 +149,19 @@
       "silhouette_pass": false
     }
   },
+  "vram_check": {
+    "max_peak_reserved_gb": 0.884765625,
+    "limit_gb": 7.5,
+    "pass": true
+  },
+  "improvement_check": {
+    "ssim_improvement_2x": false,
+    "ssim_improvement_4x": false,
+    "edge_f1_improvement_2x": false,
+    "edge_f1_improvement_4x": true,
+    "has_any_qualifying_improvement": false,
+    "note": "Edge-F1 improved at 4x by 0.079 (above +0.01 threshold) but SSIM never improved. However, all primary quality gates (SSIM, PSNR, regional SSIM) failed catastrophically, so improvement is moot."
+  },
   "overall_pass": false,
-  "conclusion": "Real-ESRGAN hallucinated plausible but statistically incorrect detail, causing massive geometric and structural degradation, especially in critical areas like the license plate. No structural advantage."
+  "conclusion": "Real-ESRGAN hallucinated plausible but statistically incorrect detail, causing massive geometric and structural degradation at both scales. Edge-F1 improved slightly (0.005 at 2x, 0.079 at 4x) due to sharpened synthetic edges, but these do not represent recovered factual detail. All SSIM, PSNR, and regional SSIM guardrails failed. No useful gain for scientific multi-frame super-resolution."
 }

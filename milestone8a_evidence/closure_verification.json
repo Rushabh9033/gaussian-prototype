@@ -1,139 +1,144 @@
 {
-  "verification_utc_timestamp": "2026-08-25T10:07:55.914914Z",
-  "verification_commit": "7370f4fb3879f78123ac30bba50a25f862a9a1db",
+  "verification_utc_timestamp": "2026-08-25T10:44:52.831958+00:00",
+  "verification_commit": "29c98f61e0f1e3552204287adef3bc6410830807",
+  "expected_final_status": "NO_USEFUL_GAIN",
+  "recorded_final_status": "NO_USEFUL_GAIN",
+  "inference_hashes_match": true,
+  "original_source_sha256": "8eda0f62759c5d72da363eb338329a87650cd931076fb1c0f932d71dbefdafc1",
   "files": {
     "milestone8a_evidence/contact_sheet.png": {
-      "sha256": "b1dbca8f70b549f22d175970f13dfe02a1e5266331be80d4db6bde86743820c0",
-      "size_bytes": 684044,
+      "sha256": "62442ca316b6e0aee982100446476b2602f0f03cdae9bb765efabfa190f3d07b",
+      "size_bytes": 1384870,
       "width": 1080,
-      "height": 440,
-      "mode": "RGB"
+      "height": 1100
     },
     "milestone8a_evidence/controlled_inputs/lr_2x_180x110.png": {
       "sha256": "6823545765553714bb41e2aed79f71d0a5959b8cf58b88a28872d7ba4d239316",
       "size_bytes": 40588,
       "width": 180,
-      "height": 110,
-      "mode": "RGB"
+      "height": 110
     },
     "milestone8a_evidence/controlled_inputs/lr_4x_90x55.png": {
       "sha256": "c5abfce38d105180f517abda72316f782c192341a274aa7f2f54a40da0a8b77b",
       "size_bytes": 10653,
       "width": 90,
-      "height": 55,
-      "mode": "RGB"
+      "height": 55
     },
     "milestone8a_evidence/crops/lanczos_headlamp.png": {
-      "sha256": "5b7249abed2748299e1a603678b90c7bac38bacadd01988a43279ea753e2c16a",
-      "size_bytes": 3729,
+      "sha256": "0f88a10a4f59830573f6086ec9b12a3027913c78b224d34637c041477d54f902",
+      "size_bytes": 3627,
       "width": 40,
-      "height": 50,
-      "mode": "RGB"
+      "height": 50
     },
     "milestone8a_evidence/crops/lanczos_plate.png": {
-      "sha256": "f7b6a16c539dcff5e4649a8aa4892c1712e462e853c62cb624a788c577b90200",
-      "size_bytes": 3685,
+      "sha256": "398dee58a665e988278f400c6bd44f09f28506a4382896bee96fc1008757dd67",
+      "size_bytes": 3636,
       "width": 60,
-      "height": 35,
-      "mode": "RGB"
+      "height": 35
     },
     "milestone8a_evidence/crops/lanczos_wheel.png": {
-      "sha256": "8d673df98641f6464d522be51a26d0260d69a00e0c501971fda23109ab6bc794",
-      "size_bytes": 11273,
+      "sha256": "2e1c9b12376d48981b85263d63c7cdeb382d4a80841482306fbd92de9813b0f5",
+      "size_bytes": 11012,
       "width": 80,
-      "height": 80,
-      "mode": "RGB"
+      "height": 80
     },
     "milestone8a_evidence/crops/realesrgan_headlamp.png": {
-      "sha256": "8f19fa0db2db8040c9cad5777f7b1170792cb1c8c15e9f5bcc53cdadf6e5ccc9",
-      "size_bytes": 3913,
+      "sha256": "eaf1663eca0e64394cf95e0aa9d7b13d7abc3317d73d876d31307452fa8678e7",
+      "size_bytes": 3872,
       "width": 40,
-      "height": 50,
-      "mode": "RGB"
+      "height": 50
     },
     "milestone8a_evidence/crops/realesrgan_plate.png": {
-      "sha256": "4df95b17d00224fdecbcbe3fe803b5b633b89dc37db9ae68c9c4fee4cd59cbdf",
-      "size_bytes": 4266,
+      "sha256": "fb22328f544865181e94e0b77e05ba37e7137d33cec6eb43e77d2846cf2a8250",
+      "size_bytes": 4196,
       "width": 60,
-      "height": 35,
-      "mode": "RGB"
+      "height": 35
     },
     "milestone8a_evidence/crops/realesrgan_wheel.png": {
-      "sha256": "78187527a7d338b94783e4baed95666569bc6954a617e91e1a78b1cdfa2f865e",
-      "size_bytes": 12642,
+      "sha256": "e86acf55487db724639427c7783fe8e1756bd55fafbd862877d406b4f7d66427",
+      "size_bytes": 12440,
       "width": 80,
-      "height": 80,
-      "mode": "RGB"
+      "height": 80
     },
     "milestone8a_evidence/lanczos/2x_360x220.png": {
       "sha256": "71eea3a559cbf67990e202e8b8ef78e6fad3c0573c563d6936a68d7df60fc6ce",
       "size_bytes": 134827,
       "width": 360,
-      "height": 220,
-      "mode": "RGB"
+      "height": 220
     },
     "milestone8a_evidence/lanczos/4x_360x220.png": {
       "sha256": "26727c9f0dedd5c1ddd6c625a760710266c10429ea5d41a940293b14621776cf",
       "size_bytes": 109476,
       "width": 360,
-      "height": 220,
-      "mode": "RGB"
+      "height": 220
     },
     "milestone8a_evidence/lanczos/orig_1440x880.png": {
       "sha256": "2355f289d247b8f9071cbc034b68314238e9957c9c21ffda7699208f076d0023",
       "size_bytes": 1511473,
       "width": 1440,
-      "height": 880,
-      "mode": "RGB"
+      "height": 880
     },
     "milestone8a_evidence/realesrgan/2x_360x220.png": {
       "sha256": "52b0ad8c843b28913b8646172fdac070e2dbc846f04329483488f9fd44ab7710",
       "size_bytes": 142131,
       "width": 360,
-      "height": 220,
-      "mode": "RGB"
+      "height": 220
     },
     "milestone8a_evidence/realesrgan/4x_360x220.png": {
       "sha256": "4898c30ae19a7765b5bc75ed4351970c3a42ee9712675f1d93661f8bb776505f",
       "size_bytes": 128787,
       "width": 360,
-      "height": 220,
-      "mode": "RGB"
+      "height": 220
     },
     "milestone8a_evidence/realesrgan/orig_1440x880.png": {
       "sha256": "da43f532174022c83b3f0dff653b4a45dae734c938788630531cc907b41dd99d",
       "size_bytes": 1845873,
       "width": 1440,
-      "height": 880,
-      "mode": "RGB"
+      "height": 880
     },
     "milestone8a_evidence/source/porche.png": {
       "sha256": "8eda0f62759c5d72da363eb338329a87650cd931076fb1c0f932d71dbefdafc1",
       "size_bytes": 158891,
       "width": 360,
-      "height": 220,
-      "mode": "RGB"
+      "height": 220
     }
   },
-  "original_source_sha256": "8eda0f62759c5d72da363eb338329a87650cd931076fb1c0f932d71dbefdafc1",
-  "inference_hashes_match": true,
   "required_artifacts_present": {
     "MILESTONE8A_REPORT.md": true,
     "milestone8a_evidence/execution_evidence.json": true,
     "milestone8a_evidence/results.json": true,
-    "milestone8a_evidence/contact_sheet.png": true
+    "milestone8a_evidence/source/porche.png": true,
+    "milestone8a_evidence/controlled_inputs/lr_2x_180x110.png": true,
+    "milestone8a_evidence/controlled_inputs/lr_4x_90x55.png": true,
+    "milestone8a_evidence/lanczos/2x_360x220.png": true,
+    "milestone8a_evidence/lanczos/4x_360x220.png": true,
+    "milestone8a_evidence/lanczos/orig_1440x880.png": true,
+    "milestone8a_evidence/realesrgan/2x_360x220.png": true,
+    "milestone8a_evidence/realesrgan/4x_360x220.png": true,
+    "milestone8a_evidence/realesrgan/orig_1440x880.png": true,
+    "milestone8a_evidence/contact_sheet.png": true,
+    "milestone8a_evidence/crops/lanczos_plate.png": true,
+    "milestone8a_evidence/crops/realesrgan_plate.png": true,
+    "milestone8a_evidence/crops/lanczos_wheel.png": true,
+    "milestone8a_evidence/crops/realesrgan_wheel.png": true,
+    "milestone8a_evidence/crops/lanczos_headlamp.png": true,
+    "milestone8a_evidence/crops/realesrgan_headlamp.png": true
   },
-  "final_status": "NO_USEFUL_GAIN",
+  "crops_git_tracked": {
+    "milestone8a_evidence/crops/lanczos_plate.png": true,
+    "milestone8a_evidence/crops/realesrgan_plate.png": true,
+    "milestone8a_evidence/crops/lanczos_wheel.png": true,
+    "milestone8a_evidence/crops/realesrgan_wheel.png": true,
+    "milestone8a_evidence/crops/lanczos_headlamp.png": true,
+    "milestone8a_evidence/crops/realesrgan_headlamp.png": true
+  },
   "provenance": {
     "realesrgan_commit": "a4abfb2979a7bbff3f69f58f58ae324608821e27",
     "basicsr_commit": "8d56e3a045f9fb3e1d8872f92ee4a4f07f886b0a",
-    "python_packages": {
-      "torch": "2.6.0+cu124",
-      "torchvision": "0.21.0+cu124"
-    },
-    "hardware": {
-      "cuda_version": "12.4",
-      "gpu_name": "NVIDIA GeForce RTX 4060 Laptop GPU"
-    }
-  }
+    "torch_version": "2.6.0+cu124",
+    "cuda_version": "12.4",
+    "gpu_name": "NVIDIA GeForce RTX 4060 Laptop GPU",
+    "torchvision_version": "0.21.0+cu124"
+  },
+  "errors": []
 }
