@@ -288,8 +288,8 @@
         "registration_rmse": 0.019126495817584903
       },
       "coverage_percent": 99.26767676767678,
-      "runtime_seconds": 2.2804360389709473,
-      "peak_ram_mb": 66.65687942504883
+      "runtime_seconds": 2.476006031036377,
+      "peak_ram_mb": 66.65542316436768
     },
     "4x": {
       "metrics": {
@@ -642,8 +642,8 @@
         "registration_rmse": 0.020498206188852248
       },
       "coverage_percent": 99.70075757575756,
-      "runtime_seconds": 2.541893243789673,
-      "peak_ram_mb": 122.46465396881104
+      "runtime_seconds": 2.866309881210327,
+      "peak_ram_mb": 122.46459674835205
     }
   }
 }
