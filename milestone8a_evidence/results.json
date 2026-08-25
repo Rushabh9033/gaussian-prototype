@@ -1,0 +1,144 @@
+{
+  "final_status": "NO_USEFUL_GAIN",
+  "metrics_2x": {
+    "realesrgan": {
+      "psnr": 23.69399674421254,
+      "ssim": 0.7500185459891259,
+      "edge_precision": 0.6398926285359653,
+      "edge_recall": 0.5277588555857861,
+      "edge_f1": 0.5784414367420747,
+      "gradient_energy": 26271.358863636364,
+      "laplacian_variance": 3245.2976193526174,
+      "color_histogram_distance": 0.12342590362118899,
+      "phash_distance": 0.0,
+      "orb_match_count": 580,
+      "orb_geometric_inlier_ratio": 0.9896551724137931
+    },
+    "lanczos": {
+      "psnr": 26.843342133575362,
+      "ssim": 0.8500455650915839,
+      "edge_precision": 0.6550781677051869,
+      "edge_recall": 0.5102179836511826,
+      "edge_f1": 0.5736441524922106,
+      "gradient_energy": 14174.895656565657,
+      "laplacian_variance": 297.1850474339353,
+      "color_histogram_distance": 0.041475555737020345,
+      "phash_distance": 0.0,
+      "orb_match_count": 625,
+      "orb_geometric_inlier_ratio": 0.9984
+    },
+    "realesrgan_regions": {
+      "plate": 0.6410794079288143,
+      "headlamp": 0.7845989510284616,
+      "wheel": 0.7360350699974783,
+      "silhouette": 0.7470427231907046
+    },
+    "lanczos_regions": {
+      "plate": 0.795756706495844,
+      "headlamp": 0.8657857321734296,
+      "wheel": 0.8252510693842322,
+      "silhouette": 0.8496381080481518
+    }
+  },
+  "metrics_4x": {
+    "realesrgan": {
+      "psnr": 21.184760666231398,
+      "ssim": 0.5927951314291616,
+      "edge_precision": 0.39910313901340316,
+      "edge_recall": 0.2728201634877152,
+      "edge_f1": 0.32409467886215604,
+      "gradient_energy": 19192.68590909091,
+      "laplacian_variance": 1017.3075237832877,
+      "color_histogram_distance": 0.13168699823848254,
+      "phash_distance": 3.0,
+      "orb_match_count": 445,
+      "orb_geometric_inlier_ratio": 0.9730337078651685
+    },
+    "lanczos": {
+      "psnr": 22.84097382158905,
+      "ssim": 0.6301044667504955,
+      "edge_precision": 0.4638954869357567,
+      "edge_recall": 0.16629768392369157,
+      "edge_f1": 0.24482888265020755,
+      "gradient_energy": 5906.6821717171715,
+      "laplacian_variance": 24.871085577364557,
+      "color_histogram_distance": 0.09441933685216171,
+      "phash_distance": 3.0,
+      "orb_match_count": 370,
+      "orb_geometric_inlier_ratio": 0.9486486486486486
+    },
+    "realesrgan_regions": {
+      "plate": 0.4052750778920102,
+      "headlamp": 0.48700892578161503,
+      "wheel": 0.4970458458230447,
+      "silhouette": 0.5740696630808041
+    },
+    "lanczos_regions": {
+      "plate": 0.49847816749171786,
+      "headlamp": 0.5557327785397149,
+      "wheel": 0.5391723761124644,
+      "silhouette": 0.6210122222694426
+    }
+  },
+  "performance": {
+    "2x": {
+      "runtime": 0.5497350692749023,
+      "peak_allocated_gb": 0.19486045837402344,
+      "peak_reserved_gb": 0.27734375
+    },
+    "4x": {
+      "runtime": 0.0816640853881836,
+      "peak_allocated_gb": 0.19486045837402344,
+      "peak_reserved_gb": 0.27734375
+    },
+    "orig": {
+      "runtime": 0.3402218818664551,
+      "peak_allocated_gb": 0.6841959953308105,
+      "peak_reserved_gb": 0.884765625
+    }
+  },
+  "guardrails": {
+    "ssim_deg_limit": 0.01,
+    "psnr_deg_limit": 1.0,
+    "edge_f1_deg_limit": 0.02,
+    "regional_ssim_deg_limit": 0.03
+  },
+  "evaluation_2x": {
+    "ssim_degradation": 0.10002701910245804,
+    "ssim_pass": false,
+    "psnr_degradation": 3.1493453893628214,
+    "psnr_pass": false,
+    "edge_f1_degradation": -0.0047972842218246825,
+    "edge_f1_pass": true,
+    "regions": {
+      "plate_degradation": 0.1546772985670296,
+      "plate_pass": false,
+      "headlamp_degradation": 0.08118678114496802,
+      "headlamp_pass": false,
+      "wheel_degradation": 0.08921599938675395,
+      "wheel_pass": false,
+      "silhouette_degradation": 0.10259538485744712,
+      "silhouette_pass": false
+    }
+  },
+  "evaluation_4x": {
+    "ssim_degradation": 0.03730933532133385,
+    "ssim_pass": false,
+    "psnr_degradation": 1.6562131553576513,
+    "psnr_pass": false,
+    "edge_f1_degradation": -0.07926579536738265,
+    "edge_f1_pass": true,
+    "regions": {
+      "plate_degradation": 0.09320308959970763,
+      "plate_pass": false,
+      "headlamp_degradation": 0.06872385275809989,
+      "headlamp_pass": false,
+      "wheel_degradation": 0.042126530289419706,
+      "wheel_pass": false,
+      "silhouette_degradation": 0.046942559188638544,
+      "silhouette_pass": false
+    }
+  },
+  "overall_pass": false,
+  "conclusion": "Real-ESRGAN hallucinated plausible but statistically incorrect detail, causing massive geometric and structural degradation, especially in critical areas like the license plate. No structural advantage."
+}
