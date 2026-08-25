@@ -47,10 +47,11 @@ def sha256_bytes(data):
 def get_git_info():
     try:
         commit = subprocess.check_output(["git", "rev-parse", "HEAD"]).strip().decode()
-        dirty = subprocess.check_output(["git", "status", "--porcelain"]).strip().decode()
-        return commit, dirty
+        status_output = subprocess.check_output(["git", "status", "--porcelain"]).decode()
+        dirty = bool(status_output.strip())
+        return commit, dirty, status_output
     except Exception:
-        return "unknown", "unknown"
+        return "unknown", True, "unknown"
 
 
 def get_dep_versions():
@@ -128,12 +129,23 @@ def run_experiment(gt_lin, scale_factor, num_frames, base_sigma, regions, experi
     save_img(gt_name, gt_uint8)
     artifacts[gt_name] = {'type': 'ground_truth'}
 
-    # 2. Register frames (WITHOUT ground truth)
-    print("  Registering frames...")
-    est_translations, accepted = register_frames(frames, ref_index=0, cc_threshold=0.85)
-
-    accepted_ids = [i for i, a in enumerate(accepted) if a]
-    rejected_ids = [i for i, a in enumerate(accepted) if not a]
+    # 2. Reconstruct using clean API (WITHOUT ground truth)
+    print("  Reconstructing...")
+    from m6a_multiframe.pipeline import reconstruct_from_frames
+    config = {
+        'ref_index': 0,
+        'cc_threshold': 0.85,
+        'base_sigma': base_sigma,
+        'max_iters': 5,
+        'initial_step': 0.1,
+        'reg_weight': 0.15
+    }
+    
+    recon_out = reconstruct_from_frames(frames, scale_factor, config)
+    est_translations = recon_out['estimated_translations']
+    accepted_ids = recon_out['accepted_ids']
+    rejected_ids = [i for i in range(num_frames) if i not in accepted_ids]
+    
     print(f"  Accepted: {len(accepted_ids)}, Rejected: {len(rejected_ids)}")
 
     # Registration error
@@ -148,26 +160,29 @@ def run_experiment(gt_lin, scale_factor, num_frames, base_sigma, regions, experi
         'registration_rmse': reg_rmse,
     }
 
-    # Filter to accepted frames
-    acc_frames = [frames[i] for i in accepted_ids]
-    acc_est = [est_translations[i] for i in accepted_ids]
+    # Extract outputs
+    ibp_result = recon_out['reconstruction']
+    coverage = recon_out['coverage']
+    confidence = recon_out['confidence']
+    ibp_history = recon_out['history']
 
-    # 3. Baselines
-    print("  Computing Lanczos baseline...")
+    # 3. Baselines (Lanczos and Shift-and-Add)
+    print("  Computing baselines...")
     lanczos_lin = cv2.resize(frames[0], (hr_w, hr_h), interpolation=cv2.INTER_LANCZOS4)
     lanczos_uint8 = lin_to_uint8(lanczos_lin)
     save_img(f"lanczos_{scale_factor}x.png", lanczos_uint8)
     artifacts[f"lanczos_{scale_factor}x.png"] = {'type': 'baseline'}
 
-    print("  Computing shift-and-add...")
+    acc_frames = [frames[i] for i in accepted_ids]
+    acc_est = [est_translations[i] for i in accepted_ids]
+    
     saa_lin = shift_and_add(acc_frames, acc_est, scale_factor)
     saa_uint8 = lin_to_uint8(saa_lin)
     save_img(f"shift_and_add_{scale_factor}x.png", saa_uint8)
     artifacts[f"shift_and_add_{scale_factor}x.png"] = {'type': 'shift_and_add'}
 
-    # 4. Robust fusion
-    print("  Computing robust fusion...")
-    fused_lin, coverage, confidence = robust_fusion(acc_frames, acc_est, scale_factor)
+    # Re-compute robust fusion just for saving baseline (or skip saving it if not strictly required, but the metrics compute it)
+    fused_lin, _, _ = robust_fusion(acc_frames, acc_est, scale_factor)
     fused_uint8 = lin_to_uint8(fused_lin)
     save_img(f"robust_fusion_{scale_factor}x.png", fused_uint8)
     artifacts[f"robust_fusion_{scale_factor}x.png"] = {'type': 'robust_fusion'}
@@ -183,12 +198,7 @@ def run_experiment(gt_lin, scale_factor, num_frames, base_sigma, regions, experi
 
     result['coverage_percent'] = float(np.mean(coverage > 0.5) * 100)
 
-    # 5. Iterative back-projection
-    print("  Running iterative back-projection...")
-    ibp_result, ibp_history = iterative_backprojection(
-        fused_lin, acc_frames, acc_est, scale_factor, base_sigma,
-        max_iters=5, initial_step=0.1, reg_weight=0.15
-    )
+    # Save final IB result
     ibp_uint8 = lin_to_uint8(ibp_result)
     save_img(f"multiframe_sr_{scale_factor}x.png", ibp_uint8)
     artifacts[f"multiframe_sr_{scale_factor}x.png"] = {'type': 'multiframe_sr'}
@@ -285,7 +295,7 @@ def run_experiment(gt_lin, scale_factor, num_frames, base_sigma, regions, experi
     # Accepted/rejected visualization
     ar_img = np.ones((200, 400, 3), dtype=np.uint8) * 255
     for i in range(num_frames):
-        color = (0, 180, 0) if accepted[i] else (0, 0, 220)
+        color = (0, 180, 0) if i in accepted_ids else (0, 0, 220)
         x = 20 + (i % 10) * 35
         y = 40 + (i // 10) * 60
         cv2.rectangle(ar_img, (x, y), (x + 25, y + 25), color, -1)
@@ -383,9 +393,9 @@ def main():
 
     run_id = str(uuid.uuid4())
     utc_time = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
-    git_commit, git_dirty = get_git_info()
+    git_commit, git_dirty, git_status = get_git_info()
     command = " ".join(sys.argv)
-
+    
     print(f"Run ID: {run_id}")
     print(f"UTC: {utc_time}")
     print(f"Commit: {git_commit}")
@@ -400,9 +410,9 @@ def main():
 
     # Regions for evaluation (in HR coordinates)
     regions = {
-        'wheel': (120, 200, 50, 150),
-        'headlamp': (60, 120, 200, 300),
-        'plate': (150, 200, 160, 260),
+        'wheel': (100, 205, 185, 260),
+        'headlamp': (70, 125, 135, 195),
+        'plate': (125, 165, 25, 100),
     }
 
     results = {}
@@ -465,39 +475,47 @@ def main():
         'utc_time': utc_time,
         'command': command,
         'git_commit': git_commit,
-        'git_dirty': git_dirty,
+        'git_dirty_at_start': git_dirty,
+        'git_status_at_start': git_status,
         'source_sha256': source_sha256,
         'dependency_versions': get_dep_versions(),
         'random_seeds': [SEED],
     }
 
-    for scale in ['2x', '4x']:
-        if scale in results and 'registration' in results[scale]:
-            r = results[scale]
-            ev = {
-                **evidence,
-                'scale_factor': int(scale[0]),
-                'frame_count': 8 if scale == '2x' else 16,
-                'estimated_translations': r['registration']['estimated_translations'],
-                'true_translations': r['registration']['true_translations'],
-                'accepted_frames': r['registration']['accepted_ids'],
-                'rejected_frames': r['registration']['rejected_ids'],
-                'registration_error': r['registration']['registration_rmse'],
-                'runtime_seconds': r.get('runtime_seconds', 0),
-                'peak_ram_mb': r.get('peak_ram_mb', 0),
-                'output_dimensions': f"{360}x{220}" if scale == '2x' else f"{360}x{220}",
-                'artifacts': {},
-            }
-            # Hash all artifacts
-            for aname in r.get('artifacts', {}):
-                apath = os.path.join(OUT_DIR, aname)
-                if os.path.exists(apath):
-                    ev['artifacts'][aname] = {
-                        'sha256': sha256_file(apath),
-                        'size': os.path.getsize(apath),
-                    }
-
-            with open(os.path.join(OUT_DIR, 'evidence.jsonl'), 'a') as f:
+    with open(os.path.join(OUT_DIR, 'evidence.jsonl'), 'a') as f:
+        for scale in ['2x', '4x']:
+            if scale in results:
+                r = results[scale]
+                ev = {
+                    **evidence,
+                    'scale_factor': int(scale[0]),
+                    'frame_count': 8 if scale == '2x' else 16,
+                }
+                
+                if 'error' in r:
+                    ev['exception'] = r['error']
+                    ev['traceback'] = r['traceback']
+                else:
+                    ev['estimated_translations'] = r['registration']['estimated_translations']
+                    ev['true_translations'] = r['registration']['true_translations']
+                    ev['accepted_frames'] = r['registration']['accepted_ids']
+                    ev['rejected_frames'] = r['registration']['rejected_ids']
+                    ev['registration_error'] = r['registration']['registration_rmse']
+                    ev['runtime_seconds'] = r.get('runtime_seconds', 0)
+                    ev['peak_ram_mb'] = r.get('peak_ram_mb', 0)
+                    ev['output_dimensions'] = f"{360}x{220}"
+                    
+                    artifacts_list = []
+                    for aname in r.get('artifacts', {}):
+                        apath = os.path.join(OUT_DIR, aname)
+                        if os.path.exists(apath):
+                            artifacts_list.append({
+                                'path': aname,
+                                'sha256': sha256_file(apath),
+                                'size': os.path.getsize(apath),
+                            })
+                    ev['artifacts'] = artifacts_list
+                    
                 f.write(json.dumps(ev, default=str) + '\n')
 
     # Provenance

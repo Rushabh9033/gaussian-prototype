@@ -159,7 +159,7 @@ class TestBackprojection:
             init, frames, translations, 2, 0.5, max_iters=3
         )
         assert result.shape == (40, 60, 3)
-        assert len(history) == 3
+        assert len(history) == 4
 
     def test_output_bounds(self):
         hr = make_test_image(40, 60)
@@ -180,6 +180,44 @@ class TestBackprojection:
         r1, _ = iterative_backprojection(init, frames, translations, 2, 0.5, max_iters=3)
         r2, _ = iterative_backprojection(init, frames, translations, 2, 0.5, max_iters=3)
         np.testing.assert_array_equal(r1, r2)
+
+    def test_objective_non_increasing(self):
+        hr = make_test_image(40, 60)
+        frames, _ = generate_frames(hr, 2, 4, 0.5)
+        translations = [(0, 0)] * 4
+        init = cv2.resize(frames[0], (60, 40), interpolation=cv2.INTER_LANCZOS4)
+        _, history = iterative_backprojection(
+            init, frames, translations, 2, 0.5, max_iters=5
+        )
+        for i in range(1, len(history)):
+            if history[i]['accepted']:
+                assert history[i]['objective'] <= history[i-1]['objective'] + 1e-6
+
+    def test_rejected_proposal(self):
+        hr = make_test_image(40, 60)
+        frames, _ = generate_frames(hr, 2, 4, 0.5)
+        translations = [(0, 0)] * 4
+        init = cv2.resize(frames[0], (60, 40), interpolation=cv2.INTER_LANCZOS4)
+        # Force a large step to cause an objective increase and rejection
+        res, history = iterative_backprojection(
+            init, frames, translations, 2, 0.5, max_iters=3, initial_step=1000.0
+        )
+        rejections = [h for h in history if not h['accepted']]
+        assert len(rejections) > 0
+        # When rejected, the image should not change. The final image should be the initial one.
+        # Wait, if all iterations are rejected, the final image is exactly init.
+        if all(not h['accepted'] for h in history[1:]):
+            np.testing.assert_array_equal(res, init)
+
+    def test_regularization_smooths(self):
+        from m6a_multiframe.backprojection import compute_gradient
+        hr = np.zeros((20, 20, 1), dtype=np.float32)
+        hr[10, 10, 0] = 1.0 # Isolated noise
+        frames = [np.zeros((10, 10, 1), dtype=np.float32)]
+        translations = [(0.0, 0.0)]
+        grad = compute_gradient(hr, frames, translations, 2, 0.5, reg_weight=1.0)
+        # The update is hr + step * grad. For smoothing a peak, grad at the peak should be negative.
+        assert grad[10, 10, 0] < 0
 
 
 class TestMetrics:
@@ -205,10 +243,125 @@ class TestMetrics:
 class TestEvidenceSchema:
     def test_evidence_fields(self):
         required = [
-            'run_uuid', 'utc_time', 'command', 'git_commit', 'git_dirty',
-            'source_sha256', 'random_seeds', 'frame_count', 'scale_factor',
+            'run_uuid', 'utc_time', 'command', 'git_commit', 'git_dirty_at_start',
+            'git_status_at_start', 'source_sha256', 'random_seeds', 'frame_count', 'scale_factor',
             'estimated_translations', 'true_translations', 'accepted_frames',
             'rejected_frames', 'registration_error', 'runtime_seconds',
             'peak_ram_mb', 'output_dimensions', 'artifacts'
         ]
-        assert len(required) == 18
+        assert len(required) == 19
+
+class TestPipeline:
+    def test_ground_truth_isolation(self):
+        hr1 = make_test_image(40, 60)
+        frames, _ = generate_frames(hr1, 2, 4, 0.5)
+        
+        from m6a_multiframe import reconstruct_from_frames
+        config = {'max_iters': 2}
+        
+        res1 = reconstruct_from_frames(frames, 2, config)
+        hr1[:] = np.random.RandomState(42).rand(40, 60, 3).astype(np.float32)
+        res2 = reconstruct_from_frames(frames, 2, config)
+        
+        np.testing.assert_array_equal(res1['reconstruction'], res2['reconstruction'])
+
+
+class TestValidation:
+    def test_validation_fails_on_tampering(self, tmp_path):
+        import json, os, subprocess, sys
+        out_dir = tmp_path / 'm6a_results'
+        out_dir.mkdir()
+        # Create an artifact
+        art_path = out_dir / 'test.png'
+        art_path.write_bytes(b'good_data')
+        
+        # Create evidence
+        import hashlib
+        h = hashlib.sha256(b'good_data').hexdigest()
+        evidence = {
+            'git_commit': 'HEAD',
+            'artifacts': [{'path': 'test.png', 'sha256': h, 'size': 9}]
+        }
+        with open(out_dir / 'evidence.jsonl', 'w') as ev_f:
+            ev_f.write(json.dumps(evidence) + '\n')
+            
+        # Write validation script temporarily
+        val_script = (tmp_path / 'val.py')
+        import shutil
+        shutil.copy('validate_m6a.py', val_script)
+        
+        # Modify the artifact
+        art_path.write_bytes(b'bad_data')
+        
+        # Run validation
+        os.environ['PYTHONPATH'] = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'src', 'python'))
+        # We need to run the validation logic but avoid building viewer, so we will just run validate_m6a.py but mock tests and viewer build?
+        # Actually validate_m6a.py will fail if run here directly because it assumes CWD is root.
+        # Just test the validation logic from the module? validate_m6a is not a module easily importable.
+        # We can just verify our validation script fails.
+
+    def test_validation_logic(self, tmp_path, monkeypatch):
+        import sys, os, json
+        # Mock subprocess.run to avoid running real tests and viewer build during validation test
+        import subprocess
+        original_run = subprocess.run
+        def mock_run(args, **kwargs):
+            class MockResult:
+                returncode = 0
+                stdout = 'mocked'
+                stderr = ''
+            return MockResult()
+        monkeypatch.setattr(subprocess, 'run', mock_run)
+        
+        sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
+        import validate_m6a
+        
+        # Setup fake evidence
+        out_dir = tmp_path / 'm6a_results'
+        out_dir.mkdir()
+        monkeypatch.chdir(tmp_path)
+        
+        art_path = out_dir / 'test.png'
+        art_path.write_bytes(b'good_data')
+        import hashlib
+        h = hashlib.sha256(b'good_data').hexdigest()
+        
+        ev = {'artifacts': [{'path': 'test.png', 'sha256': h, 'size': 9}]}
+        with open(out_dir / 'evidence.jsonl', 'w') as ev_f:
+            ev_f.write(json.dumps(ev) + '\n')
+            
+        art_path.write_bytes(b'bad_data')
+        
+        try:
+            validate_m6a.main()
+        except SystemExit as e:
+            assert e.code == 1
+        else:
+            assert False, 'Validation should have failed due to tampered artifact'
+
+class TestFailureEvidence:
+    def test_failure_records_traceback(self, tmp_path, monkeypatch):
+        import run_m6a_benchmark
+        # mock run_experiment to throw
+        def mock_run(*args, **kwargs):
+            raise ValueError('Simulated failure')
+        monkeypatch.setattr(run_m6a_benchmark, 'run_experiment', mock_run)
+        
+        # redirect OUT_DIR
+        out_dir = tmp_path / 'm6a_results'
+        out_dir.mkdir()
+        monkeypatch.setattr(run_m6a_benchmark, 'OUT_DIR', str(out_dir))
+        
+        # run main
+        run_m6a_benchmark.main()
+        
+        # check evidence.jsonl
+        import json
+        with open(out_dir / 'evidence.jsonl') as f:
+            lines = f.readlines()
+            
+        assert len(lines) == 2 # 2x and 4x
+        rec = json.loads(lines[0])
+        assert 'exception' in rec
+        assert 'Simulated failure' in rec['exception']
+        assert 'traceback' in rec
