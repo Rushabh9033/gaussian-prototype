@@ -23,10 +23,10 @@ def generate_image(reference_url, seed):
     }
     payload = {
         "model": MODEL_ID,
-        "subject_reference": {
+        "subject_reference": [{
             "type": "character", 
             "image_file": reference_url
-        },
+        }],
         "width": WIDTH,
         "height": HEIGHT,
         "response_format": "base64",
@@ -62,18 +62,29 @@ def generate_image(reference_url, seed):
         response.raise_for_status()
         data = response.json()
         
+        if data.get('base_resp', {}).get('status_code') == 2056:
+            raise QuotaError(f"Quota exceeded: {data.get('base_resp', {}).get('status_msg')}")
+        
         # Schema validation
-        if 'base64_image' not in data:
-            if 'choices' in data and len(data['choices']) > 0 and 'base64_image' in data['choices'][0]:
-                base64_str = data['choices'][0]['base64_image']
-            elif 'data' in data and len(data['data']) > 0 and 'base64_image' in data['data'][0]:
-                base64_str = data['data'][0]['base64_image']
-            else:
-                base64_str = data.get('base64_image')
-                if not base64_str:
-                    raise APIError("Response schema missing base64_image.")
-        else:
+        base64_str = None
+        if 'base64_image' in data:
             base64_str = data['base64_image']
+        elif 'choices' in data and isinstance(data['choices'], list) and len(data['choices']) > 0 and 'base64_image' in data['choices'][0]:
+            base64_str = data['choices'][0]['base64_image']
+        elif 'data' in data and isinstance(data['data'], dict):
+            if 'base64_image' in data['data']:
+                base64_str = data['data']['base64_image']
+            elif 'image_urls' in data['data'] and isinstance(data['data']['image_urls'], list) and len(data['data']['image_urls']) > 0:
+                # Need to download from URL
+                img_url = data['data']['image_urls'][0]
+                import requests as req
+                resp = req.get(img_url)
+                resp.raise_for_status()
+                return resp.content, redact_secrets(data)
+                
+        if not base64_str:
+            import json
+            raise APIError(f"Response schema missing base64_image or image_urls. Raw response: {json.dumps(redact_secrets(data))}")
             
         image_data = base64.b64decode(base64_str)
         return image_data, redact_secrets(data)
