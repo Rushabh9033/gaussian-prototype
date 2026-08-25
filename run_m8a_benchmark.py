@@ -70,7 +70,13 @@ def ensure_venv():
         subprocess.check_call([sys.executable, "-m", "venv", VENV_DIR])
         pip_exe = os.path.join(VENV_DIR, "Scripts", "pip")
         print("Installing dependencies...")
-        subprocess.check_call([pip_exe, "install", "torch", "torchvision", "opencv-python", "numpy", "realesrgan", "basicsr", "facexlib", "gfpgan"])
+        subprocess.check_call([pip_exe, "install", "torch", "torchvision", "opencv-python", "numpy"])
+        
+    if not os.path.exists(".m8a_workspace/BasicSR"):
+        subprocess.check_call(["git", "clone", "https://github.com/xinntao/BasicSR.git", ".m8a_workspace/BasicSR"])
+    if not os.path.exists(".m8a_workspace/Real-ESRGAN"):
+        subprocess.check_call(["git", "clone", "https://github.com/xinntao/Real-ESRGAN.git", ".m8a_workspace/Real-ESRGAN"])
+
 
 def write_internal_script():
     script_path = ".m8a_workspace/internal.py"
@@ -82,8 +88,13 @@ import torch
 import cv2
 import time
 import json
+
+sys.path.insert(0, os.path.abspath('.m8a_workspace/BasicSR'))
+sys.path.insert(0, os.path.abspath('.m8a_workspace/Real-ESRGAN'))
+
 from basicsr.archs.rrdbnet_arch import RRDBNet
 from realesrgan import RealESRGANer
+
 
 def main():
     model_path = '.m8a_workspace/RealESRGAN_x4plus.pth'
