@@ -1,0 +1,124 @@
+{
+  "utc_timestamp": "2026-08-25T09:44:58.979211Z",
+  "run_id": "78c6fb55-6115-4caf-bbfb-a281b808cdbd",
+  "commit": "a4274d42bbe877c55d9295d0bcf47b47b7e5d930",
+  "command": [
+    "run_m8a_benchmark.py"
+  ],
+  "input_sha256": "8eda0f62759c5d72da363eb338329a87650cd931076fb1c0f932d71dbefdafc1",
+  "model": "RealESRGAN_x4plus",
+  "official_source_commit": "pip realesrgan package (official repository wrap)",
+  "weight_url": "https://github.com/xinntao/Real-ESRGAN/releases/download/v0.1.0/RealESRGAN_x4plus.pth",
+  "weight_sha256": "4fa0d38905f75ac06eb49a7951b426670021be3018265fd191d2125df9d682f1",
+  "weight_size": 67040989,
+  "python_version": "3.13.7 (tags/v3.13.7:bcee1c3, Aug 14 2025, 14:15:11) [MSC v.1944 64 bit (AMD64)]",
+  "os_version": "Windows-11-10.0.26200-SP0",
+  "hardware": "CUDA",
+  "parameters": "tile=0 (or 256 fallback), half=True",
+  "metrics": {
+    "2x": {
+      "realesrgan": {
+        "psnr": 23.69399674421254,
+        "ssim": 0.7500185459891259,
+        "edge_precision": 0.6398926285359653,
+        "edge_recall": 0.5277588555857861,
+        "edge_f1": 0.5784414367420747,
+        "gradient_energy": 26271.358863636364,
+        "laplacian_variance": 3245.2976193526174,
+        "color_histogram_distance": 0.12342590362118899,
+        "phash_distance": 0.0,
+        "orb_match_count": 580,
+        "orb_geometric_inlier_ratio": 0.9896551724137931
+      },
+      "lanczos": {
+        "psnr": 26.843342133575362,
+        "ssim": 0.8500455650915839,
+        "edge_precision": 0.6550781677051869,
+        "edge_recall": 0.5102179836511826,
+        "edge_f1": 0.5736441524922106,
+        "gradient_energy": 14174.895656565657,
+        "laplacian_variance": 297.1850474339353,
+        "color_histogram_distance": 0.041475555737020345,
+        "phash_distance": 0.0,
+        "orb_match_count": 625,
+        "orb_geometric_inlier_ratio": 0.9984
+      },
+      "realesrgan_regions": {
+        "plate": 0.6410794079288143,
+        "headlamp": 0.7845989510284616,
+        "wheel": 0.7360350699974783,
+        "silhouette": 0.7470427231907046
+      },
+      "lanczos_regions": {
+        "plate": 0.795756706495844,
+        "headlamp": 0.8657857321734296,
+        "wheel": 0.8252510693842322,
+        "silhouette": 0.8496381080481518
+      }
+    },
+    "4x": {
+      "realesrgan": {
+        "psnr": 21.184760666231398,
+        "ssim": 0.5927951314291616,
+        "edge_precision": 0.39910313901340316,
+        "edge_recall": 0.2728201634877152,
+        "edge_f1": 0.32409467886215604,
+        "gradient_energy": 19192.68590909091,
+        "laplacian_variance": 1017.3075237832877,
+        "color_histogram_distance": 0.13168699823848254,
+        "phash_distance": 3.0,
+        "orb_match_count": 445,
+        "orb_geometric_inlier_ratio": 0.9730337078651685
+      },
+      "lanczos": {
+        "psnr": 22.84097382158905,
+        "ssim": 0.6301044667504955,
+        "edge_precision": 0.4638954869357567,
+        "edge_recall": 0.16629768392369157,
+        "edge_f1": 0.24482888265020755,
+        "gradient_energy": 5906.6821717171715,
+        "laplacian_variance": 24.871085577364557,
+        "color_histogram_distance": 0.09441933685216171,
+        "phash_distance": 3.0,
+        "orb_match_count": 370,
+        "orb_geometric_inlier_ratio": 0.9486486486486486
+      },
+      "realesrgan_regions": {
+        "plate": 0.4052750778920102,
+        "headlamp": 0.48700892578161503,
+        "wheel": 0.4970458458230447,
+        "silhouette": 0.5740696630808041
+      },
+      "lanczos_regions": {
+        "plate": 0.49847816749171786,
+        "headlamp": 0.5557327785397149,
+        "wheel": 0.5391723761124644,
+        "silhouette": 0.6210122222694426
+      }
+    }
+  },
+  "performance": {
+    "2x": {
+      "runtime": 0.5497350692749023,
+      "peak_allocated_gb": 0.19486045837402344,
+      "peak_reserved_gb": 0.27734375
+    },
+    "4x": {
+      "runtime": 0.0816640853881836,
+      "peak_allocated_gb": 0.19486045837402344,
+      "peak_reserved_gb": 0.27734375
+    },
+    "orig": {
+      "runtime": 0.3402218818664551,
+      "peak_allocated_gb": 0.6841959953308105,
+      "peak_reserved_gb": 0.884765625
+    }
+  },
+  "hashes": {
+    "p_lr2x": "6823545765553714bb41e2aed79f71d0a5959b8cf58b88a28872d7ba4d239316",
+    "p_lr4x": "c5abfce38d105180f517abda72316f782c192341a274aa7f2f54a40da0a8b77b",
+    "realesrgan_2x": "52b0ad8c843b28913b8646172fdac070e2dbc846f04329483488f9fd44ab7710",
+    "realesrgan_4x": "4898c30ae19a7765b5bc75ed4351970c3a42ee9712675f1d93661f8bb776505f",
+    "realesrgan_orig": "da43f532174022c83b3f0dff653b4a45dae734c938788630531cc907b41dd99d"
+  }
+}
