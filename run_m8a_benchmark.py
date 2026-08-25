@@ -67,15 +67,17 @@ def hash_file(path):
 def ensure_venv():
     if not os.path.exists(VENV_DIR):
         print("Creating virtual environment...")
-        subprocess.check_call([sys.executable, "-m", "venv", VENV_DIR])
+        subprocess.check_call([sys.executable, "-m", "venv", "--system-site-packages", VENV_DIR])
         pip_exe = os.path.join(VENV_DIR, "Scripts", "pip")
         print("Installing dependencies...")
-        subprocess.check_call([pip_exe, "install", "torch", "torchvision", "opencv-python", "numpy"])
+        subprocess.check_call([pip_exe, "install", "opencv-python", "pyyaml", "requests"])
         
     if not os.path.exists(".m8a_workspace/BasicSR"):
         subprocess.check_call(["git", "clone", "https://github.com/xinntao/BasicSR.git", ".m8a_workspace/BasicSR"])
+        open(".m8a_workspace/BasicSR/basicsr/version.py", "w").write('__version__="1.4.2"\n__gitsha__="unknown"\n')
     if not os.path.exists(".m8a_workspace/Real-ESRGAN"):
         subprocess.check_call(["git", "clone", "https://github.com/xinntao/Real-ESRGAN.git", ".m8a_workspace/Real-ESRGAN"])
+        open(".m8a_workspace/Real-ESRGAN/realesrgan/version.py", "w").write('__version__="0.3.0"\n__gitsha__="unknown"\n')
 
 
 def write_internal_script():
